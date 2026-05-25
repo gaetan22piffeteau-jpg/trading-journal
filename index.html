@@ -168,6 +168,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
         <div class="field"><label>Capital risqué ($)</label><input id="f-risk" type="number" placeholder="100"></div>
         <div class="field"><label>Résultat</label><select id="f-res"><option>Ouvert</option><option>Win</option><option>Loss</option><option>Breakeven</option></select></div>
       </div>
+      <div class="field"><label>Date &amp; heure du trade</label><input id="f-date" type="datetime-local"></div>
       <div class="calc-box" id="calcBox"></div>
       <div class="form-section">Setup SMC</div>
       <div class="tags-wrap" id="setup-tags">
@@ -281,7 +282,7 @@ async function saveTrade(){
   const btn=document.getElementById('saveBtn');
   btn.innerHTML='<span class="loader"></span>Enregistrement...';btn.disabled=true;
   const c=calcTrade();
-  const body={pair,direction:document.getElementById('f-dir').value,levier:+document.getElementById('f-lev').value||null,entree:+document.getElementById('f-entry').value||null,sl:+document.getElementById('f-sl').value||null,tp:+document.getElementById('f-tp').value||null,capital_risque:+document.getElementById('f-risk').value||100,resultat:document.getElementById('f-res').value,setups:getTagVals('setup-tags'),emotions:getTagVals('emo-tags'),description:document.getElementById('f-desc').value,image_url:imgData,rr:c?+c.rr.toFixed(2):null,gain:c?+c.gain.toFixed(0):null,perte:c?+c.perte.toFixed(0):null};
+  const dateVal=document.getElementById('f-date').value;const tradeDate=dateVal?new Date(dateVal).toISOString():new Date().toISOString();const body={pair,created_at:tradeDate,direction:document.getElementById('f-dir').value,levier:+document.getElementById('f-lev').value||null,entree:+document.getElementById('f-entry').value||null,sl:+document.getElementById('f-sl').value||null,tp:+document.getElementById('f-tp').value||null,capital_risque:+document.getElementById('f-risk').value||100,resultat:document.getElementById('f-res').value,setups:getTagVals('setup-tags'),emotions:getTagVals('emo-tags'),description:document.getElementById('f-desc').value,image_url:imgData,rr:c?+c.rr.toFixed(2):null,gain:c?+c.gain.toFixed(0):null,perte:c?+c.perte.toFixed(0):null};
   try{await sbFetch('/rest/v1/trades',{method:'POST',body:JSON.stringify(body)});showToast('Trade enregistré ✓');resetForm();await loadTrades();nav('journal')}
   catch(e){showToast('Erreur lors de l\'enregistrement')}
   btn.innerHTML='Enregistrer le trade';btn.disabled=false;
@@ -386,6 +387,7 @@ function getTagVals(id){return[...document.querySelectorAll('#'+id+' .tag.on')].
 
 document.querySelectorAll('.tag').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
 
+function setNow(){const now=new Date();const pad=n=>String(n).padStart(2,'0');document.getElementById('f-date').value=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':'+pad(now.getMinutes())}
 function resetForm(){
   ['f-pair','f-entry','f-sl','f-tp','f-risk','f-lev','f-desc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-dir').value='Long';document.getElementById('f-res').value='Ouvert';
@@ -435,6 +437,7 @@ function nav(page){
   if(page==='journal')loadTrades();
   if(page==='strategie')loadStrat();
   if(page==='checklist')renderChecklist();
+  if(page==='nouveau')setNow();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
