@@ -293,6 +293,70 @@ async function deleteTrade(id){
   catch(e){showToast('Erreur suppression')}
 }
 
+async function setResult(id,resultat){
+  try{await sbFetch('/rest/v1/trades?id=eq.'+id,{method:'PATCH',body:JSON.stringify({resultat})});await loadTrades();showToast('Résultat mis à jour ✓')}
+  catch(e){showToast('Erreur mise à jour')}
+}
+
+function editTrade(id){
+  const t=trades.find(x=>x.id===id);
+  if(!t)return;
+  document.getElementById('f-pair').value=t.pair||'';
+  document.getElementById('f-dir').value=t.direction||'Long';
+  document.getElementById('f-lev').value=t.levier||'';
+  document.getElementById('f-entry').value=t.entree||'';
+  document.getElementById('f-sl').value=t.sl||'';
+  document.getElementById('f-tp').value=t.tp||'';
+  document.getElementById('f-risk').value=t.capital_risque||100;
+  document.getElementById('f-res').value=t.resultat||'Ouvert';
+  document.getElementById('f-desc').value=t.description||'';
+  if(t.image_url){imgData=t.image_url;const p=document.getElementById('imgPreview');p.src=imgData;p.style.display='block'}
+  document.querySelectorAll('#setup-tags .tag').forEach(tag=>{tag.classList.toggle('on',(t.setups||[]).includes(tag.dataset.val))});
+  document.querySelectorAll('#emo-tags .tag').forEach(tag=>{tag.classList.toggle('on',(t.emotions||[]).includes(tag.dataset.val))});
+  const btn=document.getElementById('saveBtn');
+  btn.textContent='Mettre à jour le trade';
+  btn.onclick=async()=>{
+    const c=calcTrade();
+    const body={pair:document.getElementById('f-pair').value.trim().toUpperCase(),direction:document.getElementById('f-dir').value,levier:+document.getElementById('f-lev').value||null,entree:+document.getElementById('f-entry').value||null,sl:+document.getElementById('f-sl').value||null,tp:+document.getElementById('f-tp').value||null,capital_risque:+document.getElementById('f-risk').value||100,resultat:document.getElementById('f-res').value,setups:getTagVals('setup-tags'),emotions:getTagVals('emo-tags'),description:document.getElementById('f-desc').value,image_url:imgData,rr:c?+c.rr.toFixed(2):null,gain:c?+c.gain.toFixed(0):null,perte:c?+c.perte.toFixed(0):null};
+    try{await sbFetch('/rest/v1/trades?id=eq.'+id,{method:'PATCH',body:JSON.stringify(body)});showToast('Trade mis à jour ✓');resetForm();btn.textContent='Enregistrer le trade';btn.onclick=saveTrade;await loadTrades();nav('journal')}
+    catch(e){showToast('Erreur mise à jour')}
+  };
+  nav('nouveau');
+  updateCalc();
+}
+
+async function setResult(id,resultat){
+  try{await sbFetch('/rest/v1/trades?id=eq.'+id,{method:'PATCH',body:JSON.stringify({resultat})});await loadTrades();showToast('Résultat mis à jour ✓')}
+  catch(e){showToast('Erreur mise à jour')}
+}
+
+function editTrade(id){
+  const t=trades.find(x=>x.id===id);
+  if(!t)return;
+  document.getElementById('f-pair').value=t.pair||'';
+  document.getElementById('f-dir').value=t.direction||'Long';
+  document.getElementById('f-lev').value=t.levier||'';
+  document.getElementById('f-entry').value=t.entree||'';
+  document.getElementById('f-sl').value=t.sl||'';
+  document.getElementById('f-tp').value=t.tp||'';
+  document.getElementById('f-risk').value=t.capital_risque||100;
+  document.getElementById('f-res').value=t.resultat||'Ouvert';
+  document.getElementById('f-desc').value=t.description||'';
+  if(t.image_url){imgData=t.image_url;const p=document.getElementById('imgPreview');p.src=imgData;p.style.display='block'}
+  document.querySelectorAll('#setup-tags .tag').forEach(tag=>{tag.classList.toggle('on',(t.setups||[]).includes(tag.dataset.val))});
+  document.querySelectorAll('#emo-tags .tag').forEach(tag=>{tag.classList.toggle('on',(t.emotions||[]).includes(tag.dataset.val))});
+  const btn=document.getElementById('saveBtn');
+  btn.textContent='Mettre à jour le trade';
+  btn.onclick=async()=>{
+    const c=calcTrade();
+    const body={pair:document.getElementById('f-pair').value.trim().toUpperCase(),direction:document.getElementById('f-dir').value,levier:+document.getElementById('f-lev').value||null,entree:+document.getElementById('f-entry').value||null,sl:+document.getElementById('f-sl').value||null,tp:+document.getElementById('f-tp').value||null,capital_risque:+document.getElementById('f-risk').value||100,resultat:document.getElementById('f-res').value,setups:getTagVals('setup-tags'),emotions:getTagVals('emo-tags'),description:document.getElementById('f-desc').value,image_url:imgData,rr:c?+c.rr.toFixed(2):null,gain:c?+c.gain.toFixed(0):null,perte:c?+c.perte.toFixed(0):null};
+    try{await sbFetch('/rest/v1/trades?id=eq.'+id,{method:'PATCH',body:JSON.stringify(body)});showToast('Trade mis à jour ✓');resetForm();btn.textContent='Enregistrer le trade';btn.onclick=saveTrade;await loadTrades();nav('journal')}
+    catch(e){showToast('Erreur mise à jour')}
+  };
+  nav('nouveau');
+  updateCalc();
+}
+
 async function saveStrat(){
   const body={nom:document.getElementById('s-name').value,timeframes:document.getElementById('s-tf').value,regles_entree:document.getElementById('s-entry').value,regles_sortie:document.getElementById('s-exit').value,risk_management:document.getElementById('s-risk').value,interdits:document.getElementById('s-nope').value,notes:document.getElementById('s-notes').value,updated_at:new Date().toISOString()};
   try{
@@ -328,6 +392,7 @@ function renderJournal(){
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="badge ${rc}">${t.resultat}</span>
+          <button onclick="editTrade(${t.id})" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;padding:0 4px;line-height:1;font-family:var(--mono)">✏️</button>
           <button onclick="deleteTrade(${t.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0 4px;line-height:1">×</button>
         </div>
       </div>
@@ -338,6 +403,12 @@ function renderJournal(){
         <span style="color:var(--text3)">${date}</span>
       </div>
       ${t.rr?`<div class="trade-rr" style="color:${rrColor}">RR 1:${t.rr} ${t.resultat==='Win'&&t.gain?'· +$'+t.gain:t.resultat==='Loss'&&t.perte?'· -$'+t.perte:''}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="setResult(${t.id},'Win')" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(0,208,132,.3);background:${t.resultat==='Win'?'rgba(0,208,132,.2)':'transparent'};color:var(--green);font-size:12px;cursor:pointer;font-family:var(--mono)">Win</button>
+        <button onclick="setResult(${t.id},'Loss')" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(255,77,77,.3);background:${t.resultat==='Loss'?'rgba(255,77,77,.2)':'transparent'};color:var(--red);font-size:12px;cursor:pointer;font-family:var(--mono)">Loss</button>
+        <button onclick="setResult(${t.id},'Breakeven')" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(245,166,35,.3);background:${t.resultat==='Breakeven'?'rgba(245,166,35,.2)':'transparent'};color:var(--amber);font-size:12px;cursor:pointer;font-family:var(--mono)">BE</button>
+        <button onclick="setResult(${t.id},'Ouvert')" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(77,159,255,.3);background:${t.resultat==='Ouvert'?'rgba(77,159,255,.2)':'transparent'};color:var(--blue);font-size:12px;cursor:pointer;font-family:var(--mono)">Ouvert</button>
+      </div>
       ${setups?`<div class="trade-setups">${setups}</div>`:''}
       ${t.image_url?`<img src="${t.image_url}" class="trade-img" alt="chart">`:''}
       ${t.description?`<div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.5;font-family:var(--mono)">${t.description.substring(0,140)}${t.description.length>140?'...':''}</div>`:''}
