@@ -59,7 +59,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .badge.loss{background:rgba(255,77,77,.15);color:var(--red)}
 .badge.open{background:rgba(77,159,255,.15);color:var(--blue)}
 .badge.be{background:rgba(245,166,35,.15);color:var(--amber)}
-.trade-img{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px}
+.trade-img{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;cursor:pointer;transition:opacity .15s}
+.trade-img:hover{opacity:.85}
+.img-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;display:none;align-items:center;justify-content:center;cursor:zoom-out}
+.img-overlay.open{display:flex}
+.img-overlay img{max-width:95vw;max-height:95vh;object-fit:contain;border-radius:8px}
 .trade-setups{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .setup-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono)}
 .form-section{font-size:10px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;font-family:var(--mono);margin:1.25rem 0 .75rem;padding-bottom:6px;border-bottom:1px solid var(--border)}
@@ -254,6 +258,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     </button>
   </nav>
 </div>
+<div class="img-overlay" id="imgOverlay" onclick="closeImg()">
+  <img id="overlayImg" src="" alt="chart">
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -410,7 +417,7 @@ function renderJournal(){
         <button onclick="setResult(${t.id},'Ouvert')" style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(77,159,255,.3);background:${t.resultat==='Ouvert'?'rgba(77,159,255,.2)':'transparent'};color:var(--blue);font-size:12px;cursor:pointer;font-family:var(--mono)">Ouvert</button>
       </div>
       ${setups?`<div class="trade-setups">${setups}</div>`:''}
-      ${t.image_url?`<img src="${t.image_url}" class="trade-img" alt="chart">`:''}
+      ${t.image_url?`<img src="${t.image_url}" class="trade-img" alt="chart" onclick="openImg('${t.image_url}')">`:''}
       ${t.description?`<div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.5;font-family:var(--mono)">${t.description.substring(0,140)}${t.description.length>140?'...':''}</div>`:''}
     </div>`;
   }).join('');
@@ -512,6 +519,8 @@ function nav(page){
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+function openImg(src){document.getElementById('overlayImg').src=src;document.getElementById('imgOverlay').classList.add('open')}
+function closeImg(){document.getElementById('imgOverlay').classList.remove('open')}
 
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 loadTrades();renderChecklist();
