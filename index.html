@@ -537,28 +537,41 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function openImg(src){document.getElementById('overlayImg').src=src;document.getElementById('imgOverlay').classList.add('open')}
 function closeImg(){document.getElementById('imgOverlay').classList.remove('open')}
 
-function saveCapital(){
+async function saveCapital(){
   const val=+document.getElementById('capital-input').value;
   if(!val||val<=0){showToast('Entre un capital valide');return}
-  localStorage.setItem('capitalStart', val);
-  document.getElementById('capital-input').value='';
-  updateCapital();
-  showToast('Capital mis à jour ✓');
+  try{
+    const ex=await sbFetch('/rest/v1/settings?key=eq.capitalStart');
+    if(ex.length>0)await sbFetch('/rest/v1/settings?key=eq.capitalStart',{method:'PATCH',body:JSON.stringify({value:String(val)})});
+    else await sbFetch('/rest/v1/settings',{method:'POST',body:JSON.stringify({key:'capitalStart',value:String(val)})});
+    document.getElementById('capital-input').value='';
+    capitalStart=val;
+    updateCapital();
+    showToast('Capital mis à jour ✓');
+  }catch(e){showToast('Erreur sauvegarde capital')}
+}
+
+let capitalStart=0;
+
+async function loadCapital(){
+  try{
+    const d=await sbFetch('/rest/v1/settings?key=eq.capitalStart');
+    if(d.length>0){capitalStart=+d[0].value||0;updateCapital();}
+  }catch(e){}
 }
 
 function updateCapital(){
-  const start=+localStorage.getItem('capitalStart')||0;
-  if(!start){document.getElementById('s-capital').textContent='—';document.getElementById('s-capital-start').textContent='—';return}
+  if(!capitalStart){document.getElementById('s-capital').textContent='—';document.getElementById('s-capital-start').textContent='—';return}
   const pnl=trades.reduce((a,t)=>{if(t.resultat==='Win'&&t.gain)return a+(+t.gain);if(t.resultat==='Loss'&&t.perte)return a-(+t.perte);return a},0);
-  const current=start+pnl;
+  const current=capitalStart+pnl;
   const el=document.getElementById('s-capital');
   el.textContent='$'+current.toFixed(0);
   el.style.color=pnl>0?'var(--green)':pnl<0?'var(--red)':'var(--text)';
-  document.getElementById('s-capital-start').textContent='$'+start.toFixed(0);
+  document.getElementById('s-capital-start').textContent='$'+capitalStart.toFixed(0);
 }
 
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-loadTrades();renderChecklist();
+loadTrades();renderChecklist();loadCapital();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
 </script>
 </body>
