@@ -1085,10 +1085,7 @@ function renderFearGreed(){
 
 async function loadFullNews(){
   const list=document.getElementById('newsPageList');
-  list.innerHTML=`<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:2rem 0">
-    <div style="width:20px;height:20px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 12px"></div>
-    Chargement des marchés...
-  </div>`;
+  list.innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:2rem 0">Chargement des prix...</div>';
   try{
     const [coins,trending]=await Promise.all([loadCoinPrices(),loadTrendingCoins()]);
     priceData=coins;trendingData=trending;
@@ -1121,7 +1118,7 @@ function renderPricesSection(){
     const chg=c.price_change_percentage_24h||0;
     const chg1h=c.price_change_percentage_1h_in_currency||0;
     const col=chg>0?'var(--green)':chg<0?'var(--red)':'var(--text2)';
-    const price=c.current_price>1000?c.current_price.toLocaleString('fr-FR',{maximumFractionDigits:0}):c.current_price.toLocaleString('fr-FR',{maximumFractionDigits:4});
+    const p=c.current_price||0;const price=p>1000?p.toLocaleString('fr-FR',{maximumFractionDigits:0}):p.toLocaleString('fr-FR',{maximumFractionDigits:4});
     const border=chg>3?'rgba(0,208,132,.3)':chg<-3?'rgba(255,77,77,.3)':'var(--border)';
     return`<div style="background:var(--bg2);border:1px solid ${border};border-radius:10px;padding:10px 12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
