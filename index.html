@@ -775,55 +775,78 @@ const COINGECKO_IDS={
 
 // News via Coin Gecko trending + on génère depuis les mouvements de prix
 let priceData=[];
+let aiNewsCache=null;let aiNewsCacheTime=0;
 
 async function loadCoinPrices(){
   const ids=Object.values(COINGECKO_IDS).join(',');
   const url=`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=12&sparkline=false&price_change_percentage=1h,24h,7d`;
   const res=await fetch(url);
-  if(!res.ok)throw new Error('CoinGecko error');
+  if(!res.ok)throw new Error('CoinGecko');
   return await res.json();
 }
 
 async function loadTrendingCoins(){
-  const res=await fetch('https://api.coingecko.com/api/v3/search/trending');
-  if(!res.ok)return[];
+  try{
+    const res=await fetch('https://api.coingecko.com/api/v3/search/trending');
+    if(!res.ok)return[];
+    const data=await res.json();
+    return(data.coins||[]).slice(0,6).map(c=>c.item);
+  }catch(e){return[];}
+}
+
+// Génère les news via Claude API (web_search intégré)
+async function fetchAINews(apiKey){
+  const now=Date.now();
+  if(aiNewsCache&&now-aiNewsCacheTime<600000)return aiNewsCache;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1500,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:'Cherche les 8 dernières actualités importantes du marché crypto du jour (Bitcoin, Ethereum, altcoins, régulation, macro). Réponds UNIQUEMENT en JSON, tableau de 8 objets avec les champs: title (titre court et précis en français), source (nom du média), sentiment ("bull", "bear" ou "neutral"), url (lien si dispo sinon null). Aucun texte avant ou après le JSON.'}]
+    })
+  });
+  if(!res.ok)throw new Error('API error');
   const data=await res.json();
-  return(data.coins||[]).slice(0,6).map(c=>c.item);
+  // Extraire le texte de la réponse (après le tool_use)
+  const textBlock=data.content?.find(b=>b.type==='text');
+  if(!textBlock)throw new Error('No text');
+  const raw=textBlock.text.replace(/```json|```/g,'').trim();
+  const parsed=JSON.parse(raw);
+  aiNewsCache=parsed;
+  aiNewsCacheTime=now;
+  return parsed;
+}
+
+async function loadAllFeeds(){
+  const apiKey=localStorage.getItem('anthropic_key');
+  if(apiKey){
+    try{
+      const news=await fetchAINews(apiKey);
+      return news.map(n=>({...n,published_at:new Date().toISOString(),coin:null}));
+    }catch(e){}
+  }
+  // Fallback: prix CoinGecko
+  const coins=await loadCoinPrices();
+  priceData=coins;
+  return generateNewsFromPrices(coins);
 }
 
 function generateNewsFromPrices(coins){
-  const items=[];
-  coins.forEach(c=>{
+  return coins.map(c=>{
     const chg24=c.price_change_percentage_24h||0;
     const chg1h=c.price_change_percentage_1h_in_currency||0;
     const sym=c.symbol.toUpperCase();
     const price=c.current_price;
     const fmt=price>1000?price.toLocaleString('fr-FR',{maximumFractionDigits:0}):price.toLocaleString('fr-FR',{maximumFractionDigits:4});
     let title,sentiment;
-    if(Math.abs(chg24)>5){
-      sentiment=chg24>0?'bull':'bear';
-      title=`${sym} ${chg24>0?'bondit':'chute'} de ${Math.abs(chg24).toFixed(1)}% en 24h — Prix actuel : $${fmt}`;
-    } else if(Math.abs(chg1h)>1){
-      sentiment=chg1h>0?'bull':'bear';
-      title=`${sym} ${chg1h>0?'accélère':'recule'} de ${Math.abs(chg1h).toFixed(2)}% sur 1h — $${fmt}`;
-    } else {
-      sentiment='neutral';
-      title=`${sym} stable à $${fmt} (24h: ${chg24>0?'+':''}${chg24.toFixed(2)}%)`;
-    }
-    items.push({title,url:null,published_at:new Date().toISOString(),source:{title:'CoinGecko Live'},sentiment,coin:c});
-  });
-  items.sort((a,b)=>{
-    const scoreA=Math.abs(b.coin.price_change_percentage_24h||0);
-    const scoreB=Math.abs(a.coin.price_change_percentage_24h||0);
-    return scoreA-scoreB;
-  });
-  return items;
-}
-
-async function loadAllFeeds(){
-  const coins=await loadCoinPrices();
-  priceData=coins;
-  return generateNewsFromPrices(coins);
+    if(Math.abs(chg24)>5){sentiment=chg24>0?'bull':'bear';title=`${sym} ${chg24>0?'bondit':'chute'} de ${Math.abs(chg24).toFixed(1)}% en 24h — $${fmt}`;}
+    else if(Math.abs(chg1h)>1){sentiment=chg1h>0?'bull':'bear';title=`${sym} ${chg1h>0?'accélère':'recule'} de ${Math.abs(chg1h).toFixed(2)}% sur 1h — $${fmt}`;}
+    else{sentiment='neutral';title=`${sym} stable à $${fmt} (24h: ${chg24>0?'+':''}${chg24.toFixed(2)}%)`;}
+    return{title,url:null,published_at:new Date().toISOString(),source:{title:'CoinGecko Live'},sentiment,coin:c};
+  }).sort((a,b)=>Math.abs(b.coin?.price_change_percentage_24h||0)-Math.abs(a.coin?.price_change_percentage_24h||0));
 }
 
 async function loadNews(){
@@ -831,13 +854,17 @@ async function loadNews(){
   const now=Date.now();
   if(newsCache&&now-newsCacheTime<300000){renderNews(newsCache);bar.style.display='block';return}
   try{
-    const coins=await loadCoinPrices();
-    priceData=coins;
-    const items=generateNewsFromPrices(coins);
-    newsCache=items.slice(0,5);
-    newsCacheTime=now;
-    renderNews(newsCache);
-    bar.style.display='block';
+    const apiKey=localStorage.getItem('anthropic_key');
+    let items;
+    if(apiKey){
+      try{items=await fetchAINews(apiKey);}catch(e){
+        const coins=await loadCoinPrices();priceData=coins;items=generateNewsFromPrices(coins);
+      }
+    }else{
+      const coins=await loadCoinPrices();priceData=coins;items=generateNewsFromPrices(coins);
+    }
+    newsCache=items.slice(0,5);newsCacheTime=now;
+    renderNews(newsCache);bar.style.display='block';
     document.getElementById('newsTime').textContent='· '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){bar.style.display='none';}
 }
@@ -848,7 +875,8 @@ function renderNews(items){
   list.innerHTML=items.map(n=>{
     const arrow=n.sentiment==='bull'?'↑':n.sentiment==='bear'?'↓':'→';
     const col=n.sentiment==='bull'?'var(--green)':n.sentiment==='bear'?'var(--red)':'var(--text2)';
-    return`<div class="news-item"><div class="ni-title" style="color:${col}">${arrow} ${n.title}</div><div class="ni-meta">${n.source?.title||'Live'}</div></div>`;
+    const src=n.source?.title||n.source||'News';
+    return`<div class="news-item"><div class="ni-title" style="color:${col}">${arrow} ${n.title}</div><div class="ni-meta">${src}</div></div>`;
   }).join('');
 }
 
@@ -1048,17 +1076,57 @@ function renderFearGreed(){
 }
 
 async function loadFullNews(){
+  const list=document.getElementById('newsPageList');
+  const apiKey=localStorage.getItem('anthropic_key');
+
+  // Toujours charger les prix CoinGecko
+  loadCoinPrices().then(coins=>{priceData=coins;}).catch(()=>{});
+  loadTrendingCoins().then(t=>{trendingData=t;}).catch(()=>{});
+
+  if(!apiKey){
+    list.innerHTML=`<div style="background:var(--bg2);border:1px solid rgba(200,255,0,.2);border-radius:12px;padding:1.5rem;text-align:center;font-family:var(--mono);font-size:13px;line-height:2">
+      <div style="font-size:22px;margin-bottom:8px">🔑</div>
+      Pour voir les vraies news crypto,<br>entre ta clé API dans l'onglet <b style="color:var(--accent)">Agent</b><br>
+      <span style="color:var(--text3);font-size:11px">Les news sont générées par Claude avec recherche web en temps réel</span>
+    </div>`;
+    // Charger les prix quand même
+    try{
+      const coins=await loadCoinPrices();
+      priceData=coins;
+      const trending=await loadTrendingCoins();
+      trendingData=trending;
+      renderPricesSection();
+    }catch(e){}
+    return;
+  }
+
+  list.innerHTML=`<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:2rem 0">
+    <div style="width:20px;height:20px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 12px"></div>
+    Claude recherche les dernières news...
+  </div>`;
+
   try{
-    const [coins,trending]=await Promise.all([loadCoinPrices(),loadTrendingCoins()]);
+    const [news,coins,trending]=await Promise.all([
+      fetchAINews(apiKey),
+      loadCoinPrices(),
+      loadTrendingCoins()
+    ]);
+    allNewsData=news;
     priceData=coins;
-    allNewsData=generateNewsFromPrices(coins);
     trendingData=trending;
+    aiNewsCacheTime=Date.now();
     renderNewsPage();
-    newsCache=allNewsData.slice(0,5);
-    newsCacheTime=Date.now();
     document.getElementById('newsPageTime').textContent='Mis à jour '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
-    document.getElementById('newsPageList').innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Impossible de charger.<br>Réessaie dans quelques secondes.</div>';
+    // Fallback prix seulement
+    try{
+      const coins=await loadCoinPrices();priceData=coins;
+      const trending=await loadTrendingCoins();trendingData=trending;
+      allNewsData=[];
+      renderNewsPage();
+    }catch(e2){}
+    list.innerHTML+='<div style="color:var(--red);font-size:11px;font-family:var(--mono);text-align:center;margin-top:8px">Erreur chargement news IA — affichage des prix uniquement</div>';
+    document.getElementById('newsPageTime').textContent='Erreur news IA';
   }
 }
 
@@ -1071,19 +1139,15 @@ function setNewsFilter(f,btn){
   renderNewsPage();
 }
 
-function renderNewsPage(){
-  const list=document.getElementById('newsPageList');
-  if(!priceData.length){list.innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Chargement...</div>';return}
-
-  // Section prix en grille
-  let filtered=priceData;
-  if(currentFilter==='bullish')filtered=priceData.filter(c=>(c.price_change_percentage_24h||0)>2);
-  else if(currentFilter==='bearish')filtered=priceData.filter(c=>(c.price_change_percentage_24h||0)<-2);
-  else if(currentFilter==='important')filtered=priceData.slice(0,6);
-
-  const pricesHtml=`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px">Marchés en direct</div>
+function renderPricesSection(){
+  if(!priceData.length)return'';
+  let coins=priceData;
+  if(currentFilter==='bullish')coins=priceData.filter(c=>(c.price_change_percentage_24h||0)>2);
+  else if(currentFilter==='bearish')coins=priceData.filter(c=>(c.price_change_percentage_24h||0)<-2);
+  else if(currentFilter==='important')coins=priceData.slice(0,6);
+  return`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px;margin-top:${allNewsData.length?'1.25rem':'0'}">Marchés en direct</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem">
-  ${filtered.map(c=>{
+  ${coins.map(c=>{
     const chg=c.price_change_percentage_24h||0;
     const chg1h=c.price_change_percentage_1h_in_currency||0;
     const col=chg>0?'var(--green)':chg<0?'var(--red)':'var(--text2)';
@@ -1101,22 +1165,49 @@ function renderNewsPage(){
       <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">1h: ${chg1h>0?'+':''}${chg1h.toFixed(2)}%</div>
     </div>`;
   }).join('')}
-  </div>`;
+  </div>
+  ${trendingData.length&&currentFilter==='all'?`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px">Trending</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem">
+  ${trendingData.map(c=>`<div style="background:var(--bg2);border:1px solid rgba(200,255,0,.2);border-radius:8px;padding:5px 10px;display:flex;align-items:center;gap:6px">
+    <img src="${c.thumb}" width="16" height="16" style="border-radius:50%" onerror="this.style.display='none'">
+    <span style="font-size:12px;font-family:var(--mono);color:var(--accent)">${c.symbol}</span>
+  </div>`).join('')}
+  </div>`:''}`;
+}
 
-  // Section trending
-  let trendHtml='';
-  if(trendingData.length&&currentFilter==='all'){
-    trendHtml=`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px">Trending 24h</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem">
-    ${trendingData.map(c=>`<div style="background:var(--bg2);border:1px solid rgba(200,255,0,.2);border-radius:8px;padding:5px 10px;display:flex;align-items:center;gap:6px">
-      <img src="${c.thumb}" width="16" height="16" style="border-radius:50%" onerror="this.style.display='none'">
-      <span style="font-size:12px;font-family:var(--mono);color:var(--accent)">${c.symbol}</span>
-    </div>`).join('')}
-    </div>`;
+function renderNewsPage(){
+  const list=document.getElementById('newsPageList');
+  let html='';
+
+  // Section news IA
+  if(allNewsData.length){
+    let filtered=allNewsData;
+    if(currentFilter==='bullish')filtered=allNewsData.filter(n=>n.sentiment==='bull');
+    else if(currentFilter==='bearish')filtered=allNewsData.filter(n=>n.sentiment==='bear');
+    else if(currentFilter==='important')filtered=allNewsData.slice(0,5);
+
+    html+=`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px">Dernières news · IA</div>`;
+    html+=filtered.map(n=>{
+      const col=n.sentiment==='bull'?'rgba(0,208,132,.3)':n.sentiment==='bear'?'rgba(255,77,77,.3)':'var(--border)';
+      const arrow=n.sentiment==='bull'?'↑':n.sentiment==='bear'?'↓':'→';
+      const acol=n.sentiment==='bull'?'var(--green)':n.sentiment==='bear'?'var(--red)':'var(--text2)';
+      const src=n.source?.title||n.source||'News';
+      const safeUrl=(n.url||'').replace(/'/g,'%27');
+      return`<div class="news-full-card" style="border-left:3px solid ${col};cursor:${safeUrl?'pointer':'default'}" ${safeUrl?`onclick="openNewsLink('${safeUrl}')"`:''}> 
+        <div class="nfc-title"><span style="color:${acol}">${arrow}</span> ${n.title}</div>
+        <div class="nfc-meta" style="margin-top:6px">
+          <span>${src}</span>
+          <span class="nfc-currency" style="margin-left:auto">${n.sentiment==='bull'?'Haussier':n.sentiment==='bear'?'Baissier':'Neutre'}</span>
+        </div>
+      </div>`;
+    }).join('');
   }
 
-  list.innerHTML=pricesHtml+trendHtml;
+  // Section prix
+  html+=renderPricesSection();
+  list.innerHTML=html||'<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Aucun contenu</div>';
 }
+
 
 function openNewsLink(url){if(url&&url!=='#')window.open(url,'_blank')}
 
