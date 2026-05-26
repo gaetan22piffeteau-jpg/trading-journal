@@ -2,39 +2,61 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Content-Type', 'application/json');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  const { filter, currencies } = req.query || {};
-  const url = `https://cryptopanic.com/api/free/v1/posts/?auth_token=demo&public=true&kind=news&filter=${filter||'rising'}&currencies=${currencies||'BTC,ETH,SOL,XRP,BNB'}`;
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-    });
+    // RSS CoinDesk via rss2json — gratuit, pas de CORS côté serveur
+    const feeds = [
+      { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk' },
+      { url: 'https://cointelegraph.com/rss', source: 'CoinTelegraph' },
+      { url: 'https://decrypt.co/feed', source: 'Decrypt' }
+    ];
 
-    if (!response.ok) throw new Error(`CryptoPanic error: ${response.status}`);
+    const results = await Promise.allSettled(
+      feeds.map(f =>
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}&count=8`)
+          .then(r => r.json())
+          .then(d => (d.items || []).map(item => ({
+            title: item.title,
+            url: item.link,
+            source: f.source,
+            published_at: item.pubDate,
+            currencies: detectCoins(item.title),
+            votes_up: 0,
+            votes_down: 0,
+            sentiment: detectSentiment(item.title)
+          })))
+      )
+    );
 
-    const data = await response.json();
-
-    const news = (data.results || []).slice(0, 15).map(n => ({
-      title: n.title,
-      url: n.url,
-      source: n.source?.title || 'News',
-      published_at: n.published_at,
-      currencies: (n.currencies || []).map(c => c.code),
-      votes_up: n.votes?.positive || 0,
-      votes_down: n.votes?.negative || 0,
-      sentiment: (n.votes?.positive || 0) > (n.votes?.negative || 0) ? 'bull'
-               : (n.votes?.negative || 0) > (n.votes?.positive || 0) ? 'bear'
-               : 'neutral'
-    }));
+    let news = [];
+    results.forEach(r => { if (r.status === 'fulfilled') news.push(...r.value); });
+    news.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+    news = news.slice(0, 20);
 
     return res.status(200).json({ news });
 
   } catch (err) {
     return res.status(500).json({ news: [], error: err.message });
   }
+}
+
+function detectCoins(title) {
+  const t = title.toUpperCase();
+  const coins = ['BTC','ETH','SOL','BNB','XRP','ADA','DOGE','AVAX','LINK','DOT','MATIC'];
+  return coins.filter(c => t.includes(c) || t.includes(coinName(c)));
+}
+
+function coinName(c) {
+  const map = { BTC:'BITCOIN', ETH:'ETHEREUM', SOL:'SOLANA', BNB:'BINANCE', XRP:'RIPPLE', ADA:'CARDANO', DOGE:'DOGECOIN', AVAX:'AVALANCHE', LINK:'CHAINLINK', DOT:'POLKADOT', MATIC:'POLYGON' };
+  return map[c] || c;
+}
+
+function detectSentiment(title) {
+  const t = title.toLowerCase();
+  const bull = ['surge','rally','rises','gains','bullish','up','high','record','growth','pump','soars','jumps','breaks','recovery','bottom'];
+  const bear = ['crash','drop','falls','bearish','down','low','loss','dump','decline','fear','sell','plunge','tumbles','slumps','warning'];
+  const b = bull.filter(w => t.includes(w)).length;
+  const d = bear.filter(w => t.includes(w)).length;
+  return b > d ? 'bull' : d > b ? 'bear' : 'neutral';
 }
