@@ -152,6 +152,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
       Ma stratégie
     </button>
+    <button class="nav-item" onclick="nav('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Paramètres
+    </button>
   </div>
 
   <div id="main">
@@ -352,6 +356,46 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <div class="strat-saved" id="stratSaved">Stratégie sauvegardée ✓</div>
     </div>
 
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-header"><div><div class="page-title">Paramètres</div><div class="page-sub">Clés API & configuration</div></div></div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem">
+        <div class="form-section" style="margin-top:0">Anthropic (Claude IA)</div>
+        <div style="font-size:12px;color:var(--text2);font-family:var(--mono);margin-bottom:10px;line-height:1.6">Utilisée pour traduire et résumer les news en français.<br>Crée une clé gratuite sur <b style="color:var(--accent)">console.anthropic.com</b></div>
+        <div class="field">
+          <label>Clé API Anthropic</label>
+          <div style="display:flex;gap:8px">
+            <input type="password" id="set-anthropic" placeholder="sk-ant-api03-..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);outline:none">
+            <button onclick="toggleShow('set-anthropic')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--mono)">👁</button>
+          </div>
+        </div>
+        <div id="anthropic-status" style="font-size:11px;font-family:var(--mono);margin-bottom:10px;display:none"></div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem">
+        <div class="form-section" style="margin-top:0">NewsData.io (News)</div>
+        <div style="font-size:12px;color:var(--text2);font-family:var(--mono);margin-bottom:10px;line-height:1.6">Utilisée pour récupérer les actualités crypto.<br>Crée une clé gratuite sur <b style="color:var(--accent)">newsdata.io</b></div>
+        <div class="field">
+          <label>Clé API NewsData</label>
+          <div style="display:flex;gap:8px">
+            <input type="password" id="set-newsdata" placeholder="pub_..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--mono);outline:none">
+            <button onclick="toggleShow('set-newsdata')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--mono)">👁</button>
+          </div>
+        </div>
+        <div id="newsdata-status" style="font-size:11px;font-family:var(--mono);margin-bottom:10px;display:none"></div>
+      </div>
+
+      <button onclick="saveSettings()" class="btn btn-primary">Sauvegarder les clés</button>
+      <div id="settings-saved" style="text-align:center;font-size:12px;color:var(--green);font-family:var(--mono);margin-top:8px;display:none">Clés sauvegardées ✓</div>
+
+      <div style="background:rgba(255,77,77,.06);border:1px solid rgba(255,77,77,.2);border-radius:10px;padding:12px 14px;margin-top:1rem;font-size:12px;font-family:var(--mono);color:var(--text2);line-height:1.8">
+        <b style="color:var(--red)">⚠ Sécurité</b><br>
+        Les clés sont stockées localement dans ton navigateur.<br>
+        Ne les partage jamais dans un chat ou un email.
+      </div>
+    </div>
+
   </div>
 
   <nav id="bottomnav">
@@ -374,6 +418,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <button class="bnav-item" onclick="nav('checklist')" id="bn-checklist">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       Check
+    </button>
+    <button class="bnav-item" onclick="nav('settings')" id="bn-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Config
     </button>
   </nav>
 </div>
@@ -418,6 +466,7 @@ function nav(page){
   if(page==='checklist')renderChecklist();
   if(page==='nouveau')setNow();
   if(page==='calc')renderPaliers();
+  if(page==='settings')loadSettings();
   if(page==='news')loadNews();
 }
 
@@ -901,6 +950,35 @@ function renderPaliers(){
 /* ═══════════════════════════════════════
    INIT
 ═══════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════ */
+function loadSettings(){
+  const ak=localStorage.getItem('anthropic_key')||'';
+  const nk=localStorage.getItem('newsdata_key')||'';
+  document.getElementById('set-anthropic').value=ak;
+  document.getElementById('set-newsdata').value=nk;
+  if(ak){const el=document.getElementById('anthropic-status');el.style.display='block';el.innerHTML='<span style="color:var(--green)">✓ Clé configurée</span>';}
+  if(nk){const el=document.getElementById('newsdata-status');el.style.display='block';el.innerHTML='<span style="color:var(--green)">✓ Clé configurée</span>';}
+}
+
+function saveSettings(){
+  const ak=document.getElementById('set-anthropic').value.trim();
+  const nk=document.getElementById('set-newsdata').value.trim();
+  if(ak)localStorage.setItem('anthropic_key',ak);
+  if(nk)localStorage.setItem('newsdata_key',nk);
+  document.getElementById('settings-saved').style.display='block';
+  setTimeout(()=>document.getElementById('settings-saved').style.display='none',2500);
+  showToast('Clés sauvegardées ✓');
+  // Recharger les news avec les nouvelles clés
+  newsLoaded=false;allNews=[];
+}
+
+function toggleShow(id){
+  const el=document.getElementById(id);
+  el.type=el.type==='password'?'text':'password';
+}
+
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 loadTrades();
 loadCapital();
