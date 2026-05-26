@@ -1,86 +1,109 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-anthropic-key, x-newsdata-key');
   res.setHeader('Content-Type', 'application/json');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // Lire les clés depuis les headers envoyés par l'app
+  const ANTHROPIC_KEY = req.headers['x-anthropic-key'] || '';
+  const NEWSDATA_KEY = req.headers['x-newsdata-key'] || '';
+
+  if (!NEWSDATA_KEY) {
+    return res.status(400).json({ news: [], error: 'Clé NewsData manquante — configure-la dans Paramètres' });
+  }
+
   try {
-    const feeds = [
-      { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk' },
-      { url: 'https://cointelegraph.com/rss', source: 'CoinTelegraph' },
-      { url: 'https://decrypt.co/feed', source: 'Decrypt' },
-      { url: 'https://bitcoinmagazine.com/.rss/full/', source: 'Bitcoin Magazine' }
-    ];
+    // 1. Récupérer les news
+    const newsUrl = `https://newsdata.io/api/1/news?apikey=${NEWSDATA_KEY}&category=business,technology&q=bitcoin OR ethereum OR crypto OR blockchain&language=en&size=8`;
+    const newsRes = await fetch(newsUrl);
+    const newsData = await newsRes.json();
 
-    const results = await Promise.allSettled(
-      feeds.map(async f => {
-        const r = await fetch(f.url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
-            'Accept': 'application/rss+xml, application/xml, text/xml'
-          }
-        });
-        const xml = await r.text();
-        return parseRSS(xml, f.source);
-      })
-    );
+    if (newsData.status !== 'success') throw new Error(newsData.message || 'NewsData error');
 
-    let news = [];
-    results.forEach(r => { if (r.status === 'fulfilled') news.push(...r.value); });
-    news.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+    const rawNews = (newsData.results || []).map(a => ({
+      title: a.title,
+      description: (a.description || '').substring(0, 200),
+      url: a.link,
+      source: a.source_name || 'News',
+      published_at: a.pubDate
+    }));
 
-    return res.status(200).json({ news: news.slice(0, 20) });
+    // 2. Si clé Anthropic dispo → traduire + résumer
+    if (ANTHROPIC_KEY) {
+      const prompt = `Tu es un analyste crypto. Voici ${rawNews.length} news en anglais. Pour chacune, traduis le titre en français et fais un résumé de 1 phrase claire en français.
+
+NEWS :
+${rawNews.map((n,i) => `${i+1}. ${n.title}\n${n.description}`).join('\n\n')}
+
+Réponds UNIQUEMENT en JSON, tableau dans l'ordre :
+[{"title":"titre FR","summary":"résumé 1 phrase FR","sentiment":"bull ou bear ou neutral"},...]
+Aucun texte avant ou après.`;
+
+      const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const claudeData = await claudeRes.json();
+      const raw = claudeData.content?.[0]?.text || '[]';
+      const clean = raw.replace(/```json|```/g,'').trim();
+      const start = clean.indexOf('[');
+      const end = clean.lastIndexOf(']');
+      const translated = JSON.parse(clean.substring(start, end+1));
+
+      const news = translated.map((t,i) => ({
+        title: t.title,
+        summary: t.summary,
+        url: rawNews[i]?.url || null,
+        source: rawNews[i]?.source || 'News',
+        published_at: rawNews[i]?.published_at || new Date().toISOString(),
+        currencies: detectCoins(rawNews[i]?.title || ''),
+        votes_up: 0, votes_down: 0,
+        sentiment: t.sentiment || 'neutral'
+      }));
+
+      return res.status(200).json({ news, translated: true });
+    }
+
+    // 3. Sans clé Anthropic → news brutes en anglais
+    const news = rawNews.map(a => ({
+      title: a.title,
+      summary: null,
+      url: a.url,
+      source: a.source,
+      published_at: a.published_at,
+      currencies: detectCoins(a.title),
+      votes_up: 0, votes_down: 0,
+      sentiment: detectSentiment(a.title)
+    }));
+
+    return res.status(200).json({ news, translated: false });
 
   } catch (err) {
     return res.status(500).json({ news: [], error: err.message });
   }
 }
 
-function parseRSS(xml, source) {
-  const items = [];
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-  let match;
-  while ((match = itemRegex.exec(xml)) !== null) {
-    const item = match[1];
-    const title = stripTags(getTag(item, 'title'));
-    const link = getTag(item, 'link') || getTag(item, 'guid');
-    const pubDate = getTag(item, 'pubDate');
-    if (!title) continue;
-    items.push({
-      title,
-      url: link || null,
-      source,
-      published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-      currencies: detectCoins(title),
-      votes_up: 0,
-      votes_down: 0,
-      sentiment: detectSentiment(title)
-    });
-  }
-  return items.slice(0, 8);
+function detectCoins(text) {
+  const t = text.toUpperCase();
+  const map = { BTC:'BITCOIN', ETH:'ETHEREUM', SOL:'SOLANA', BNB:'BINANCE', XRP:'RIPPLE', ADA:'CARDANO', DOGE:'DOGECOIN', AVAX:'AVALANCHE', LINK:'CHAINLINK' };
+  return Object.entries(map).filter(([k,v]) => t.includes(k)||t.includes(v)).map(([k])=>k);
 }
 
-function getTag(xml, tag) {
-  const m = xml.match(new RegExp('<' + tag + '[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/' + tag + '>')) ||
-            xml.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)<\\/' + tag + '>'));
-  return m ? m[1].trim() : '';
-}
-
-function stripTags(str) {
-  return str.replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#\d+;/g,'').trim();
-}
-
-function detectCoins(title) {
-  const t = title.toUpperCase();
-  const map = { BTC:'BITCOIN', ETH:'ETHEREUM', SOL:'SOLANA', BNB:'BINANCE', XRP:'RIPPLE', ADA:'CARDANO', DOGE:'DOGECOIN', AVAX:'AVALANCHE', LINK:'CHAINLINK', DOT:'POLKADOT', MATIC:'POLYGON' };
-  return Object.entries(map).filter(([k,v]) => t.includes(k) || t.includes(v)).map(([k]) => k);
-}
-
-function detectSentiment(title) {
-  const t = title.toLowerCase();
-  const bull = ['surge','rally','rises','gains','bullish','jumps','soars','breaks','record','recovery','pump','high'];
-  const bear = ['crash','drop','falls','bearish','plunge','tumbles','slumps','warning','fear','dump','low','loss'];
-  const b = bull.filter(w => t.includes(w)).length;
-  const d = bear.filter(w => t.includes(w)).length;
-  return b > d ? 'bull' : d > b ? 'bear' : 'neutral';
+function detectSentiment(text) {
+  const t = text.toLowerCase();
+  const bull = ['surge','rally','rises','gains','bullish','jumps','soars','record','recovery','high','break','above'];
+  const bear = ['crash','drop','falls','bearish','plunge','tumbles','warning','fear','dump','low','loss','down','below'];
+  const b = bull.filter(w=>t.includes(w)).length;
+  const d = bear.filter(w=>t.includes(w)).length;
+  return b>d?'bull':d>b?'bear':'neutral';
 }
