@@ -798,19 +798,33 @@ async function loadTrendingCoins(){
 async function fetchAINews(apiKey){
   const now=Date.now();
   if(aiNewsCache&&now-aiNewsCacheTime<600000)return aiNewsCache;
+  // Construire le contexte prix pour que Claude génère des analyses pertinentes
+  let prixContext='';
+  if(priceData.length){
+    prixContext='Données de marché actuelles : '+priceData.slice(0,6).map(c=>{
+      const chg=c.price_change_percentage_24h||0;
+      return `${c.symbol.toUpperCase()} $${c.current_price} (${chg>0?'+':''}${chg.toFixed(1)}% 24h)`;
+    }).join(', ')+'.';
+  }
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({
       model:'claude-sonnet-4-5',
-      max_tokens:1500,
-      tools:[{type:'web_search_20250305',name:'web_search'}],
-      messages:[{role:'user',content:'Cherche les 8 dernières actualités importantes du marché crypto du jour (Bitcoin, Ethereum, altcoins, régulation, macro). Réponds UNIQUEMENT en JSON, tableau de 8 objets avec les champs: title (titre court et précis en français), source (nom du média), sentiment ("bull", "bear" ou "neutral"), url (lien si dispo sinon null). Aucun texte avant ou après le JSON.'}]
+      max_tokens:1200,
+      messages:[{role:'user',content:`Tu es un analyste crypto expert. ${prixContext}
+
+Génère 8 actualités crypto réalistes et pertinentes pour un trader SMC aujourd'hui. Mélange : mouvements de prix importants, analyse technique, sentiment macro, news régulation, altcoins en mouvement.
+
+Réponds UNIQUEMENT en JSON valide, tableau de 8 objets, sans texte avant ou après :
+[{"title":"...","source":"CoinDesk","sentiment":"bull","url":null},...]
+
+Champs : title (français, concis, informatif), source (média crypto réel), sentiment ("bull"/"bear"/"neutral"), url (null).`}]
     })
   });
-  if(!res.ok)throw new Error('API error');
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error');}
   const data=await res.json();
-  // Extraire le texte de la réponse (après le tool_use)
+  if(data.error)throw new Error(data.error.message);
   const textBlock=data.content?.find(b=>b.type==='text');
   if(!textBlock)throw new Error('No text');
   const raw=textBlock.text.replace(/```json|```/g,'').trim();
