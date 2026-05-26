@@ -692,7 +692,7 @@ async function loadNews(){
     .catch(()=>{});
 
   // News via Netlify Function
-  fetch('/.netlify/functions/news?filter=rising&currencies=BTC,ETH,SOL,XRP,BNB,AVAX')
+  fetch('/api/news?filter=rising&currencies=BTC,ETH,SOL,XRP,BNB,AVAX')
     .then(r=>r.json()).then(d=>{
       allNews=d.news||[];
       newsLoaded=true;
