@@ -5,57 +5,81 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // RSS CoinDesk via rss2json — gratuit, pas de CORS côté serveur
     const feeds = [
       { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', source: 'CoinDesk' },
       { url: 'https://cointelegraph.com/rss', source: 'CoinTelegraph' },
-      { url: 'https://decrypt.co/feed', source: 'Decrypt' }
+      { url: 'https://decrypt.co/feed', source: 'Decrypt' },
+      { url: 'https://bitcoinmagazine.com/.rss/full/', source: 'Bitcoin Magazine' }
     ];
 
     const results = await Promise.allSettled(
-      feeds.map(f =>
-        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}&count=8`)
-          .then(r => r.json())
-          .then(d => (d.items || []).map(item => ({
-            title: item.title,
-            url: item.link,
-            source: f.source,
-            published_at: item.pubDate,
-            currencies: detectCoins(item.title),
-            votes_up: 0,
-            votes_down: 0,
-            sentiment: detectSentiment(item.title)
-          })))
-      )
+      feeds.map(async f => {
+        const r = await fetch(f.url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+            'Accept': 'application/rss+xml, application/xml, text/xml'
+          }
+        });
+        const xml = await r.text();
+        return parseRSS(xml, f.source);
+      })
     );
 
     let news = [];
     results.forEach(r => { if (r.status === 'fulfilled') news.push(...r.value); });
     news.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-    news = news.slice(0, 20);
 
-    return res.status(200).json({ news });
+    return res.status(200).json({ news: news.slice(0, 20) });
 
   } catch (err) {
     return res.status(500).json({ news: [], error: err.message });
   }
 }
 
-function detectCoins(title) {
-  const t = title.toUpperCase();
-  const coins = ['BTC','ETH','SOL','BNB','XRP','ADA','DOGE','AVAX','LINK','DOT','MATIC'];
-  return coins.filter(c => t.includes(c) || t.includes(coinName(c)));
+function parseRSS(xml, source) {
+  const items = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const item = match[1];
+    const title = stripTags(getTag(item, 'title'));
+    const link = getTag(item, 'link') || getTag(item, 'guid');
+    const pubDate = getTag(item, 'pubDate');
+    if (!title) continue;
+    items.push({
+      title,
+      url: link || null,
+      source,
+      published_at: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+      currencies: detectCoins(title),
+      votes_up: 0,
+      votes_down: 0,
+      sentiment: detectSentiment(title)
+    });
+  }
+  return items.slice(0, 8);
 }
 
-function coinName(c) {
+function getTag(xml, tag) {
+  const m = xml.match(new RegExp('<' + tag + '[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/' + tag + '>')) ||
+            xml.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)<\\/' + tag + '>'));
+  return m ? m[1].trim() : '';
+}
+
+function stripTags(str) {
+  return str.replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#\d+;/g,'').trim();
+}
+
+function detectCoins(title) {
+  const t = title.toUpperCase();
   const map = { BTC:'BITCOIN', ETH:'ETHEREUM', SOL:'SOLANA', BNB:'BINANCE', XRP:'RIPPLE', ADA:'CARDANO', DOGE:'DOGECOIN', AVAX:'AVALANCHE', LINK:'CHAINLINK', DOT:'POLKADOT', MATIC:'POLYGON' };
-  return map[c] || c;
+  return Object.entries(map).filter(([k,v]) => t.includes(k) || t.includes(v)).map(([k]) => k);
 }
 
 function detectSentiment(title) {
   const t = title.toLowerCase();
-  const bull = ['surge','rally','rises','gains','bullish','up','high','record','growth','pump','soars','jumps','breaks','recovery','bottom'];
-  const bear = ['crash','drop','falls','bearish','down','low','loss','dump','decline','fear','sell','plunge','tumbles','slumps','warning'];
+  const bull = ['surge','rally','rises','gains','bullish','jumps','soars','breaks','record','recovery','pump','high'];
+  const bear = ['crash','drop','falls','bearish','plunge','tumbles','slumps','warning','fear','dump','low','loss'];
   const b = bull.filter(w => t.includes(w)).length;
   const d = bear.filter(w => t.includes(w)).length;
   return b > d ? 'bull' : d > b ? 'bear' : 'neutral';
