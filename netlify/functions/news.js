@@ -1,27 +1,23 @@
-exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Content-Type': 'application/json'
-  };
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Content-Type', 'application/json');
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
 
-  const { filter, currencies } = event.queryStringParameters || {};
-
+  const { filter, currencies } = req.query || {};
   const url = `https://cryptopanic.com/api/free/v1/posts/?auth_token=demo&public=true&kind=news&filter=${filter||'rising'}&currencies=${currencies||'BTC,ETH,SOL,XRP,BNB'}`;
 
   try {
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
     });
 
-    if (!res.ok) throw new Error(`CryptoPanic error: ${res.status}`);
+    if (!response.ok) throw new Error(`CryptoPanic error: ${response.status}`);
 
-    const data = await res.json();
+    const data = await response.json();
 
     const news = (data.results || []).slice(0, 15).map(n => ({
       title: n.title,
@@ -36,18 +32,9 @@ exports.handler = async (event) => {
                : 'neutral'
     }));
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ news })
-    };
+    return res.status(200).json({ news });
 
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ news: [], error: err.message })
-    };
+    return res.status(500).json({ news: [], error: err.message });
   }
-};
-
+}
