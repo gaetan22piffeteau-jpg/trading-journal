@@ -922,7 +922,7 @@ Génère le signal JSON complet maintenant.`;
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'interleaved-thinking-2025-05-14','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
         model:'claude-sonnet-4-5',
-        max_tokens:1000,
+        max_tokens:2000,
         system:SMC_SYSTEM_PROMPT,
         messages:[{role:'user',content:userMsg}]
       })
@@ -937,10 +937,15 @@ Génère le signal JSON complet maintenant.`;
 
     let signal;
     try{
-      const clean=raw.replace(/```json|```/g,'').trim();
+      // Extraire le JSON même s'il y a du texte autour
+      let clean=raw.replace(/```json|```/g,'').trim();
+      // Trouver le bloc JSON { ... }
+      const start=clean.indexOf('{');
+      const end=clean.lastIndexOf('}');
+      if(start!==-1&&end!==-1)clean=clean.substring(start,end+1);
       signal=JSON.parse(clean);
     }catch(e){
-      container.innerHTML=`<div class="alert-box">Erreur de parsing du signal. Réponse brute :<br><br>${raw.substring(0,300)}</div>`;
+      container.innerHTML=`<div class="alert-box">Erreur de parsing. Réessaie.<br><small style="color:var(--text3)">${raw.substring(0,200)}</small></div>`;
       dot.className='agent-dot error';btn.disabled=false;btn.textContent='Analyser';return;
     }
 
