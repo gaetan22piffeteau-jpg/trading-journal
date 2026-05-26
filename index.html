@@ -109,6 +109,84 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── AGENT STYLES ── */
+#page-agent .agent-header{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem}
+.agent-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.agent-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+.agent-dot.error{background:var(--red)}
+.agent-input-row{display:flex;gap:8px;margin-bottom:1rem}
+.agent-input-row input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;font-family:var(--sans);outline:none}
+.agent-input-row input:focus{border-color:var(--border2)}
+.agent-btn{background:var(--accent);border:none;color:#000;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--mono);white-space:nowrap;transition:opacity .15s}
+.agent-btn:hover{opacity:.85}
+.agent-btn:disabled{opacity:.4;cursor:not-allowed}
+.news-bar{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:1rem}
+.news-bar-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px}
+.news-list{display:flex;flex-direction:column;gap:6px;max-height:140px;overflow-y:auto}
+.news-item{font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.4;padding:4px 0;border-bottom:1px solid var(--border)}
+.news-item:last-child{border-bottom:none}
+.news-item .ni-title{color:var(--text);margin-bottom:2px}
+.news-item .ni-meta{color:var(--text3);font-size:10px}
+.signal-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1rem;transition:border-color .2s}
+.signal-card.bull{border-color:rgba(0,208,132,.3)}
+.signal-card.bear{border-color:rgba(255,77,77,.3)}
+.signal-card.wait{border-color:rgba(245,166,35,.3)}
+.signal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.signal-pair{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.signal-dir{font-size:12px;padding:4px 10px;border-radius:6px;font-family:var(--mono);font-weight:600}
+.signal-dir.long{background:rgba(0,208,132,.15);color:var(--green)}
+.signal-dir.short{background:rgba(255,77,77,.15);color:var(--red)}
+.signal-dir.wait{background:rgba(245,166,35,.15);color:var(--amber)}
+.signal-levels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.signal-level{background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center}
+.sl-label{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.sl-val{font-size:14px;font-weight:700;font-family:var(--mono);margin-top:3px}
+.sl-val.entry{color:var(--blue)}
+.sl-val.sl{color:var(--red)}
+.sl-val.tp{color:var(--green)}
+.signal-rr{font-size:13px;font-family:var(--mono);color:var(--accent);font-weight:600;margin-bottom:10px}
+.signal-context{font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.6;background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.signal-checklist{margin-bottom:14px}
+.sc-item{display:flex;align-items:center;gap:8px;font-size:12px;font-family:var(--mono);padding:3px 0;color:var(--text2)}
+.sc-item.ok{color:var(--green)}
+.sc-item.fail{color:var(--red)}
+.sc-item svg{width:14px;height:14px;flex-shrink:0}
+.signal-actions{display:flex;gap:8px}
+.btn-validate{flex:2;background:var(--accent);border:none;color:#000;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:opacity .15s}
+.btn-validate:hover{opacity:.85}
+.btn-reject{flex:1;background:transparent;border:1px solid var(--border);color:var(--text2);padding:11px;border-radius:8px;font-size:13px;cursor:pointer;font-family:var(--mono);transition:all .15s}
+.btn-reject:hover{border-color:var(--red);color:var(--red)}
+.agent-empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px;line-height:2;font-family:var(--mono)}
+.alert-box{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.3);border-radius:10px;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--amber);line-height:1.6;margin-bottom:1rem}
+.api-key-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:1rem}
+.api-key-section label{font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px}
+.api-key-row{display:flex;gap:8px}
+.api-key-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;font-family:var(--mono);outline:none}
+.api-key-row button{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:8px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--mono);transition:all .15s}
+.api-key-row button:hover{border-color:var(--accent);color:var(--accent)}
+.streaming-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;font-size:13px;font-family:var(--mono);color:var(--text2);line-height:1.8;min-height:80px;white-space:pre-wrap;display:none}
+.streaming-box.active{display:block}
+.cursor-blink{display:inline-block;width:8px;height:14px;background:var(--accent);animation:blink .8s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.news-filter{font-size:11px;padding:5px 12px;border-radius:20px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);cursor:pointer;font-family:var(--mono);transition:all .15s}
+.news-filter:hover{border-color:var(--border2);color:var(--text)}
+.news-filter.on{background:rgba(200,255,0,.1);border-color:rgba(200,255,0,.4);color:var(--accent)}
+.news-full-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:10px;transition:border-color .15s;cursor:pointer}
+.news-full-card:hover{border-color:var(--border2)}
+.news-full-card.bull{border-left:3px solid var(--green)}
+.news-full-card.bear{border-left:3px solid var(--red)}
+.news-full-card.important{border-left:3px solid var(--amber)}
+.nfc-title{font-size:14px;font-weight:600;line-height:1.4;margin-bottom:6px;color:var(--text)}
+.nfc-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3);font-family:var(--mono)}
+.nfc-vote{display:flex;align-items:center;gap:4px;font-size:11px;font-family:var(--mono)}
+.nfc-vote.up{color:var(--green)}.nfc-vote.down{color:var(--red)}
+.nfc-currency{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono)}
+.fear-widget{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:14px}
+.fear-score{font-size:36px;font-weight:700;font-family:var(--mono);min-width:56px}
+.fear-label{font-size:12px;color:var(--text2);font-family:var(--mono)}
+.fear-bar{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.fear-fill{height:100%;border-radius:3px;transition:width .6s ease}
 </style>
 </head>
 <body>
@@ -125,6 +203,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       Nouveau trade
     </button>
+    <div class="sidebar-section">Agent IA</div>
+    <button class="nav-item" onclick="nav('agent')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+      Signaux SMC
+    </button>
+    <button class="nav-item" onclick="nav('news')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8L4 6v14a2 2 0 002 2z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
+      Actu crypto
+    </button>
     <div class="sidebar-section">Outils</div>
     <button class="nav-item" onclick="nav('checklist')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
@@ -137,6 +224,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   </div>
 
   <div id="main">
+    <!-- PAGE JOURNAL -->
     <div class="page active" id="page-journal">
       <div class="page-header">
         <div>
@@ -167,6 +255,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <div id="tradeList"></div>
     </div>
 
+    <!-- PAGE NOUVEAU TRADE -->
     <div class="page" id="page-nouveau">
       <div class="page-header">
         <div><div class="page-title">Nouveau trade</div></div>
@@ -223,6 +312,63 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <button class="btn btn-primary" id="saveBtn" onclick="saveTrade()">Enregistrer le trade</button>
     </div>
 
+    <!-- PAGE AGENT SMC -->
+    <div class="page" id="page-agent">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Agent SMC <span class="agent-dot" id="agentDot"></span></div>
+          <div class="page-sub">Signaux SMC/ICT Scalping 2RR</div>
+        </div>
+      </div>
+
+      <div class="api-key-section">
+        <label>Clé API Anthropic</label>
+        <div class="api-key-row">
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-..." value="">
+          <button onclick="saveApiKey()">Sauver</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:6px">Stockée localement — jamais envoyée ailleurs</div>
+      </div>
+
+      <div class="news-bar" id="newsBar" style="display:none">
+        <div class="news-bar-title">News crypto du moment <span id="newsTime" style="color:var(--text3)"></span></div>
+        <div class="news-list" id="newsList"></div>
+      </div>
+
+      <div class="agent-input-row">
+        <input type="text" id="pairInput" placeholder="Paire ex: BTC/USDT" value="BTC/USDT">
+        <button class="agent-btn" id="analyzeBtn" onclick="runAgent()">Analyser</button>
+      </div>
+
+      <div class="streaming-box" id="streamingBox"></div>
+
+      <div id="signalContainer"></div>
+
+      <div class="agent-empty" id="agentEmpty">
+        Entre ta clé API, choisis une paire<br>et lance l'analyse
+      </div>
+    </div>
+
+    <!-- PAGE NEWS -->
+    <div class="page" id="page-news">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Actu crypto</div>
+          <div class="page-sub" id="newsPageTime">Chargement...</div>
+        </div>
+        <button class="btn btn-sm btn-ghost" onclick="refreshNews()">↻ Refresh</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap">
+        <button class="news-filter on" data-filter="all" onclick="setNewsFilter('all',this)">Tout</button>
+        <button class="news-filter" data-filter="bullish" onclick="setNewsFilter('bullish',this)">Haussier</button>
+        <button class="news-filter" data-filter="bearish" onclick="setNewsFilter('bearish',this)">Baissier</button>
+        <button class="news-filter" data-filter="important" onclick="setNewsFilter('important',this)">Important</button>
+      </div>
+      <div class="fear-widget" id="fearWidget" style="display:none"></div>
+      <div id="newsPageList"><div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Chargement des news...</div></div>
+    </div>
+
+    <!-- PAGE CHECKLIST -->
     <div class="page" id="page-checklist">
       <div class="page-header">
         <div><div class="page-title">Checklist setup</div><div class="page-sub" id="checkProgressTxt">0 / 0 étapes</div></div>
@@ -237,6 +383,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <button class="btn btn-primary" style="margin-top:1rem" onclick="validateSetup()">Valider le setup →</button>
     </div>
 
+    <!-- PAGE STRATEGIE -->
     <div class="page" id="page-strategie">
       <div class="page-header">
         <div><div class="page-title">Ma stratégie</div></div>
@@ -262,6 +409,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       Nouveau
     </button>
+    <button class="bnav-item" onclick="nav('agent')" id="bn-agent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+      Agent
+    </button>
+    <button class="bnav-item" onclick="nav('news')" id="bn-news">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8L4 6v14a2 2 0 002 2z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>
+      News
+    </button>
     <button class="bnav-item" onclick="nav('checklist')" id="bn-checklist">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       Checklist
@@ -280,7 +435,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 <script>
 const SB_URL='https://bsqosrzvvgvhkieokzsi.supabase.co';
 const SB_KEY='sb_publishable_aZvHa_7PbdEt9-bJtq-7tQ_gQ79rHwP';
-const CHECKS_DEFAULT={macro:[],setup:[],gestion:[]};
 let trades=[],checks={},imgData=null;
 
 function setSyncDot(s){const d=document.getElementById('syncDot');d.className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'')}
@@ -303,7 +457,8 @@ async function saveTrade(){
   const btn=document.getElementById('saveBtn');
   btn.innerHTML='<span class="loader"></span>Enregistrement...';btn.disabled=true;
   const c=calcTrade();
-  const dateVal=document.getElementById('f-date').value;const tradeDate=dateVal?new Date(dateVal).toISOString():new Date().toISOString();const body={pair,created_at:tradeDate,direction:document.getElementById('f-dir').value,levier:+document.getElementById('f-lev').value||null,entree:+document.getElementById('f-entry').value||null,sl:+document.getElementById('f-sl').value||null,tp:+document.getElementById('f-tp').value||null,capital_risque:+document.getElementById('f-risk').value||100,resultat:document.getElementById('f-res').value,setups:getTagVals('setup-tags'),emotions:getTagVals('emo-tags'),description:document.getElementById('f-desc').value,image_url:imgData,rr:c?+c.rr.toFixed(2):null,gain:c?+c.gain.toFixed(0):null,perte:c?+c.perte.toFixed(0):null};
+  const dateVal=document.getElementById('f-date').value;const tradeDate=dateVal?new Date(dateVal).toISOString():new Date().toISOString();
+  const body={pair,created_at:tradeDate,direction:document.getElementById('f-dir').value,levier:+document.getElementById('f-lev').value||null,entree:+document.getElementById('f-entry').value||null,sl:+document.getElementById('f-sl').value||null,tp:+document.getElementById('f-tp').value||null,capital_risque:+document.getElementById('f-risk').value||100,resultat:document.getElementById('f-res').value,setups:getTagVals('setup-tags'),emotions:getTagVals('emo-tags'),description:document.getElementById('f-desc').value,image_url:imgData,rr:c?+c.rr.toFixed(2):null,gain:c?+c.gain.toFixed(0):null,perte:c?+c.perte.toFixed(0):null};
   try{await sbFetch('/rest/v1/trades',{method:'POST',body:JSON.stringify(body)});showToast('Trade enregistré ✓');resetForm();await loadTrades();nav('journal')}
   catch(e){showToast('Erreur lors de l\'enregistrement')}
   btn.innerHTML='Enregistrer le trade';btn.disabled=false;
@@ -320,8 +475,7 @@ async function setResult(id,resultat){
 }
 
 function editTrade(id){
-  const t=trades.find(x=>x.id===id);
-  if(!t)return;
+  const t=trades.find(x=>x.id===id);if(!t)return;
   document.getElementById('f-pair').value=t.pair||'';
   document.getElementById('f-dir').value=t.direction||'Long';
   document.getElementById('f-lev').value=t.levier||'';
@@ -342,40 +496,7 @@ function editTrade(id){
     try{await sbFetch('/rest/v1/trades?id=eq.'+id,{method:'PATCH',body:JSON.stringify(body)});showToast('Trade mis à jour ✓');resetForm();btn.textContent='Enregistrer le trade';btn.onclick=saveTrade;await loadTrades();nav('journal')}
     catch(e){showToast('Erreur mise à jour')}
   };
-  nav('nouveau');
-  updateCalc();
-}
-
-async function setResult(id,resultat){
-  try{await sbFetch('/rest/v1/trades?id=eq.'+id,{method:'PATCH',body:JSON.stringify({resultat})});await loadTrades();showToast('Résultat mis à jour ✓')}
-  catch(e){showToast('Erreur mise à jour')}
-}
-
-function editTrade(id){
-  const t=trades.find(x=>x.id===id);
-  if(!t)return;
-  document.getElementById('f-pair').value=t.pair||'';
-  document.getElementById('f-dir').value=t.direction||'Long';
-  document.getElementById('f-lev').value=t.levier||'';
-  document.getElementById('f-entry').value=t.entree||'';
-  document.getElementById('f-sl').value=t.sl||'';
-  document.getElementById('f-tp').value=t.tp||'';
-  document.getElementById('f-risk').value=t.capital_risque||100;
-  document.getElementById('f-res').value=t.resultat||'Ouvert';
-  document.getElementById('f-desc').value=t.description||'';
-  if(t.image_url){imgData=t.image_url;const p=document.getElementById('imgPreview');p.src=imgData;p.style.display='block'}
-  document.querySelectorAll('#setup-tags .tag').forEach(tag=>{tag.classList.toggle('on',(t.setups||[]).includes(tag.dataset.val))});
-  document.querySelectorAll('#emo-tags .tag').forEach(tag=>{tag.classList.toggle('on',(t.emotions||[]).includes(tag.dataset.val))});
-  const btn=document.getElementById('saveBtn');
-  btn.textContent='Mettre à jour le trade';
-  btn.onclick=async()=>{
-    const c=calcTrade();
-    const body={pair:document.getElementById('f-pair').value.trim().toUpperCase(),direction:document.getElementById('f-dir').value,levier:+document.getElementById('f-lev').value||null,entree:+document.getElementById('f-entry').value||null,sl:+document.getElementById('f-sl').value||null,tp:+document.getElementById('f-tp').value||null,capital_risque:+document.getElementById('f-risk').value||100,resultat:document.getElementById('f-res').value,setups:getTagVals('setup-tags'),emotions:getTagVals('emo-tags'),description:document.getElementById('f-desc').value,image_url:imgData,rr:c?+c.rr.toFixed(2):null,gain:c?+c.gain.toFixed(0):null,perte:c?+c.perte.toFixed(0):null};
-    try{await sbFetch('/rest/v1/trades?id=eq.'+id,{method:'PATCH',body:JSON.stringify(body)});showToast('Trade mis à jour ✓');resetForm();btn.textContent='Enregistrer le trade';btn.onclick=saveTrade;await loadTrades();nav('journal')}
-    catch(e){showToast('Erreur mise à jour')}
-  };
-  nav('nouveau');
-  updateCalc();
+  nav('nouveau');updateCalc();
 }
 
 async function saveStrat(){
@@ -477,7 +598,6 @@ function handleImg(input){
 }
 
 function getTagVals(id){return[...document.querySelectorAll('#'+id+' .tag.on')].map(t=>t.dataset.val)}
-
 document.querySelectorAll('.tag').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
 
 function setNow(){const now=new Date();const pad=n=>String(n).padStart(2,'0');document.getElementById('f-date').value=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'T'+pad(now.getHours())+':'+pad(now.getMinutes())}
@@ -489,14 +609,12 @@ function resetForm(){
 }
 
 let customChecks=JSON.parse(localStorage.getItem('customChecks')||'[]');
-
 function renderChecklist(){
   const el=document.getElementById('cl-all');
   if(!customChecks.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);padding:1rem 0">Aucune étape — ajoute les tiennes ci-dessous</div>';document.getElementById('checkProgressTxt').textContent='0 / 0 étapes';document.getElementById('checkFill').style.width='0%';return}
   let checked=0;
   el.innerHTML=customChecks.map((c,i)=>{
-    const isChecked=checks['c_'+i]||false;
-    if(isChecked)checked++;
+    const isChecked=checks['c_'+i]||false;if(isChecked)checked++;
     return`<div class="check-item ${isChecked?'done':''}" id="ci-c_${i}">
       <input type="checkbox" ${isChecked?'checked':''} onchange="toggleCheck('c_${i}',this)">
       <span>${c}</span>
@@ -507,7 +625,6 @@ function renderChecklist(){
   document.getElementById('checkProgressTxt').textContent=checked+' / '+total+' étapes';
   document.getElementById('checkFill').style.width=(checked/total*100)+'%';
 }
-
 function toggleCheck(key,cb){checks[key]=cb.checked;document.getElementById('ci-'+key)?.classList.toggle('done',cb.checked);renderChecklist()}
 function resetChecks(){checks={};renderChecklist()}
 function addCheck(){
@@ -531,6 +648,8 @@ function nav(page){
   if(page==='strategie')loadStrat();
   if(page==='checklist')renderChecklist();
   if(page==='nouveau')setNow();
+  if(page==='agent'){loadApiKey();loadNews();}
+  if(page==='news'){loadFearGreed().then(()=>{renderFearGreed();if(!allNewsData.length)loadFullNews();else renderNewsPage();});}
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
@@ -544,22 +663,14 @@ async function saveCapital(){
     const ex=await sbFetch('/rest/v1/settings?key=eq.capitalStart');
     if(ex.length>0)await sbFetch('/rest/v1/settings?key=eq.capitalStart',{method:'PATCH',body:JSON.stringify({value:String(val)})});
     else await sbFetch('/rest/v1/settings',{method:'POST',body:JSON.stringify({key:'capitalStart',value:String(val)})});
-    document.getElementById('capital-input').value='';
-    capitalStart=val;
-    updateCapital();
-    showToast('Capital mis à jour ✓');
+    document.getElementById('capital-input').value='';capitalStart=val;updateCapital();showToast('Capital mis à jour ✓');
   }catch(e){showToast('Erreur sauvegarde capital')}
 }
 
 let capitalStart=0;
-
 async function loadCapital(){
-  try{
-    const d=await sbFetch('/rest/v1/settings?key=eq.capitalStart');
-    if(d.length>0){capitalStart=+d[0].value||0;updateCapital();}
-  }catch(e){}
+  try{const d=await sbFetch('/rest/v1/settings?key=eq.capitalStart');if(d.length>0){capitalStart=+d[0].value||0;updateCapital();}}catch(e){}
 }
-
 function updateCapital(){
   if(!capitalStart){document.getElementById('s-capital').textContent='—';document.getElementById('s-capital-start').textContent='—';return}
   const pnl=trades.reduce((a,t)=>{if(t.resultat==='Win'&&t.gain)return a+(+t.gain);if(t.resultat==='Loss'&&t.perte)return a-(+t.perte);return a},0);
@@ -570,7 +681,377 @@ function updateCapital(){
   document.getElementById('s-capital-start').textContent='$'+capitalStart.toFixed(0);
 }
 
+/* ════════════════════════════════════════
+   AGENT SMC — LOGIQUE PRINCIPALE
+════════════════════════════════════════ */
+
+const SMC_SYSTEM_PROMPT = `Tu es un agent de trading expert en SMC/ICT Scalping. Tu analyses les marchés crypto et génères des signaux de trading précis.
+
+STRATÉGIE : SMC/ICT Scalping 2RR
+
+TIMEFRAMES : 1H → M15 → M5
+
+RÈGLES D'ENTRÉE (dans cet ordre) :
+
+1. TENDANCE 1H : Identifier une série de BOS haussiers ou baissiers = biais directionnel.
+
+2. RANGE 1H : Le range est toléré UNIQUEMENT si on a des indices clairs de direction :
+   - Sweep des lows du range → chercher LONG
+   - Sweep des highs du range → chercher SHORT
+   - FVG claire dans le range qui donne un biais
+   - Si prix au milieu du range sans signal → ATTENDRE
+
+3. ZONE D'INTÉRÊT 1H : Il faut obligatoirement UNE des deux zones suivantes (pas besoin des deux) :
+   - FVG 1H non mitigée : zone de déséquilibre où le prix peut revenir
+   - Liquidity Sweep 1H confirmé : le prix a raclé la liquidité (EQH/EQL, tops/lows) et repart
+
+4. CHoCH (Change of Character) : UN seul CHoCH suffit, soit M15 soit M5.
+   - RÈGLE CRITIQUE : Le CHoCH DOIT se former soit DANS la FVG 1H, soit APRÈS un Liquidity Sweep 1H confirmé.
+   - FVG 1H → CHoCH idéalement formé à l'intérieur de la FVG (setup premium)
+   - Liquidity Sweep 1H → CHoCH qui suit naturellement le sweep (le prix a sweepé puis retourne)
+   - CHoCH sans FVG ni sweep = INVALIDE, ne pas trader
+
+5. ENTRÉE : Sur le CHoCH M15 ou M5 selon ce qui est disponible
+6. RR minimum : 2:1
+
+RÈGLES SL/TP :
+- SL : sous le top ou low protégé le plus proche
+- TP : RR 2:1 automatique
+
+RISK MANAGEMENT :
+- Max 5% du capital par trade
+- Après un SL → passer à 3%, puis 1%
+
+INTERDITS :
+- Revenge trade
+- FOMO
+- Trader sans checklist complète
+- Trader quand on va mal
+- Plus de 5% du capital
+- CHoCH sans zone FVG ni sweep
+
+IMPORTANT : Tu ne peux pas voir les charts en temps réel. Analyse les éléments fournis par l'utilisateur et génère un signal basé sur sa description.
+
+FORMAT DE RÉPONSE : JSON uniquement, aucun texte avant ou après :
+{
+  "direction": "LONG" | "SHORT" | "ATTENDRE",
+  "pair": "string",
+  "entry": number | null,
+  "sl": number | null,
+  "tp": number | null,
+  "rr": number | null,
+  "setups": ["BOS","CHoCH","FVG","Liq. Sweep","OTE Zone"],
+  "zone_type": "FVG" | "SWEEP" | "FVG+SWEEP" | null,
+  "checklist": {
+    "tendance_1h": true | false,
+    "zone_identifiee": true | false,
+    "choch_dans_zone": true | false,
+    "rr_valide": true | false,
+    "biais_range_ok": true | false,
+    "news_ok": true | false
+  },
+  "context": "string (explication courte en français)",
+  "news_alert": "string | null",
+  "can_trade": true | false
+}`;
+
+function saveApiKey(){
+  const k=document.getElementById('apiKeyInput').value.trim();
+  if(!k){showToast('Entre une clé API');return}
+  localStorage.setItem('anthropic_key',k);
+  showToast('Clé API sauvegardée ✓');
+}
+function loadApiKey(){
+  const k=localStorage.getItem('anthropic_key')||'';
+  document.getElementById('apiKeyInput').value=k;
+}
+
+let newsCache=null;let newsCacheTime=0;
+async function loadNews(){
+  const bar=document.getElementById('newsBar');
+  const now=Date.now();
+  if(newsCache&&now-newsCacheTime<600000){renderNews(newsCache);bar.style.display='block';return}
+  try{
+    const res=await fetch('https://cryptopanic.com/api/free/v1/posts/?auth_token=demo&public=true&kind=news&currencies=BTC,ETH&filter=important');
+    if(!res.ok)throw new Error();
+    const data=await res.json();
+    newsCache=data.results?.slice(0,5)||[];
+    newsCacheTime=now;
+    renderNews(newsCache);
+    bar.style.display='block';
+    document.getElementById('newsTime').textContent='· '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    bar.style.display='none';
+  }
+}
+
+function renderNews(items){
+  const list=document.getElementById('newsList');
+  if(!items||!items.length){list.innerHTML='<div style="color:var(--text3);font-size:11px;font-family:var(--mono)">Aucune news disponible</div>';return}
+  list.innerHTML=items.map(n=>{
+    const time=new Date(n.published_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const vote=n.votes?.positive>n.votes?.negative?'↑':'↓';
+    return`<div class="news-item"><div class="ni-title">${vote} ${n.title}</div><div class="ni-meta">${n.source?.title||'News'} · ${time}</div></div>`;
+  }).join('');
+}
+
+async function runAgent(){
+  const apiKey=localStorage.getItem('anthropic_key');
+  if(!apiKey){showToast('Entre ta clé API d\'abord');return}
+  const pair=document.getElementById('pairInput').value.trim()||'BTC/USDT';
+  const btn=document.getElementById('analyzeBtn');
+  const dot=document.getElementById('agentDot');
+  const streaming=document.getElementById('streamingBox');
+  const container=document.getElementById('signalContainer');
+  const empty=document.getElementById('agentEmpty');
+
+  btn.disabled=true;btn.textContent='Analyse...';
+  dot.className='agent-dot loading';
+  streaming.className='streaming-box active';
+  streaming.innerHTML='Analyse du marché en cours<span class="cursor-blink"></span>';
+  container.innerHTML='';
+  empty.style.display='none';
+
+  const newsText=newsCache?newsCache.map(n=>n.title).join(' | '):'Pas de news disponible';
+  const userMsg=`Analyse la paire ${pair} pour un signal SMC/ICT Scalping 2RR.
+
+News actuelles : ${newsText}
+
+Je vais te décrire ce que je vois sur mon chart :
+- Demande-moi les informations dont tu as besoin sur la structure du marché pour générer un signal précis, ou génère une analyse type basée sur un setup haussier plausible pour ${pair} en ce moment.
+
+Génère le signal JSON complet maintenant.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:SMC_SYSTEM_PROMPT,
+        messages:[{role:'user',content:userMsg}]
+      })
+    });
+    if(!res.ok){
+      const err=await res.json();
+      throw new Error(err.error?.message||'Erreur API');
+    }
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'{}';
+    streaming.className='streaming-box';
+
+    let signal;
+    try{
+      const clean=raw.replace(/```json|```/g,'').trim();
+      signal=JSON.parse(clean);
+    }catch(e){
+      container.innerHTML=`<div class="alert-box">Erreur de parsing du signal. Réponse brute :<br><br>${raw.substring(0,300)}</div>`;
+      dot.className='agent-dot error';btn.disabled=false;btn.textContent='Analyser';return;
+    }
+
+    renderSignal(signal,pair);
+    dot.className='agent-dot';
+  }catch(e){
+    streaming.className='streaming-box';
+    container.innerHTML=`<div class="alert-box">Erreur : ${e.message}</div>`;
+    dot.className='agent-dot error';
+    empty.style.display='block';
+    empty.textContent='Erreur — vérifie ta clé API';
+  }
+  btn.disabled=false;btn.textContent='Analyser';
+}
+
+function renderSignal(s,pair){
+  const container=document.getElementById('signalContainer');
+  const dirClass=s.direction==='LONG'?'long':s.direction==='SHORT'?'short':'wait';
+  const cardClass=s.direction==='LONG'?'bull':s.direction==='SHORT'?'bear':'wait';
+
+  const checks=[
+    {key:'tendance_1h',label:'Tendance 1H confirmée'},
+    {key:'zone_identifiee',label:'Zone d\'intérêt identifiée'},
+    {key:'choch_dans_zone',label:'CHoCH dans zone (FVG ou après Sweep)'},
+    {key:'rr_valide',label:'RR ≥ 2:1'},
+    {key:'biais_range_ok',label:'Biais directionnel clair'},
+    {key:'news_ok',label:'Pas d\'event macro dans 2h'},
+  ];
+
+  const checksHtml=checks.map(c=>{
+    const ok=s.checklist?.[c.key];
+    return`<div class="sc-item ${ok?'ok':'fail'}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${ok?'<polyline points="20 6 9 17 4 12"/>':'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'}</svg>
+      ${c.label}
+    </div>`;
+  }).join('');
+
+  const canTrade=s.can_trade;
+
+  container.innerHTML=`<div class="signal-card ${cardClass}">
+    <div class="signal-top">
+      <span class="signal-pair">${s.pair||pair}</span>
+      <span class="signal-dir ${dirClass}">${s.direction}</span>
+    </div>
+    ${s.news_alert?`<div class="alert-box" style="margin-bottom:10px">${s.news_alert}</div>`:''}
+    ${s.entry?`<div class="signal-levels">
+      <div class="signal-level"><div class="sl-label">Entrée</div><div class="sl-val entry">${s.entry}</div></div>
+      <div class="signal-level"><div class="sl-label">Stop Loss</div><div class="sl-val sl">${s.sl}</div></div>
+      <div class="signal-level"><div class="sl-label">Take Profit</div><div class="sl-val tp">${s.tp}</div></div>
+    </div>`:''}
+    ${s.rr?`<div class="signal-rr">RR 1:${s.rr?.toFixed?s.rr.toFixed(2):s.rr}</div>`:''}
+    <div class="signal-context">${s.context||'Analyse en cours...'}</div>
+    <div class="signal-checklist">${checksHtml}</div>
+    ${canTrade?`<div class="signal-actions">
+      <button class="btn-validate" onclick="validateSignal(${JSON.stringify(s).replace(/"/g,'&quot;')})">Valider le trade →</button>
+      <button class="btn-reject" onclick="rejectSignal()">Ignorer</button>
+    </div>`:`<div style="background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.2);border-radius:8px;padding:10px 12px;font-size:12px;font-family:var(--mono);color:var(--red);text-align:center">Setup incomplet — ne pas trader</div>`}
+  </div>`;
+}
+
+async function validateSignal(s){
+  if(typeof s==='string'){try{s=JSON.parse(s.replace(/&quot;/g,'"'))}catch(e){showToast('Erreur signal');return}}
+  const c_e=+s.entry,c_sl=+s.sl,c_tp=+s.tp;
+  const dir=s.direction==='LONG'?'Long':'Short';
+  const lev=+document.getElementById('f-lev')?.value||1;
+  const risk=+document.getElementById('f-risk')?.value||100;
+
+  let rr=null,gain=null,perte=null;
+  if(c_e&&c_sl&&c_tp){
+    const riskPct=dir==='Short'?(c_e-c_sl)/c_e*100:(c_sl-c_e)/c_e*100;
+    const gainPct=dir==='Short'?(c_e-c_tp)/c_e*100:(c_tp-c_e)/c_e*100;
+    rr=gainPct/Math.abs(riskPct);
+    const pos=risk*lev;gain=pos*(gainPct/100);perte=pos*(Math.abs(riskPct)/100);
+  }
+
+  const body={
+    pair:(s.pair||'').replace('/','').toUpperCase(),
+    created_at:new Date().toISOString(),
+    direction:dir,
+    levier:lev||null,
+    entree:c_e||null,
+    sl:c_sl||null,
+    tp:c_tp||null,
+    capital_risque:risk,
+    resultat:'Ouvert',
+    setups:s.setups||[],
+    emotions:['Discipliné'],
+    description:`Signal agent SMC. ${s.context||''}`.substring(0,500),
+    image_url:null,
+    rr:rr?+rr.toFixed(2):null,
+    gain:gain?+gain.toFixed(0):null,
+    perte:perte?+perte.toFixed(0):null
+  };
+
+  try{
+    await sbFetch('/rest/v1/trades',{method:'POST',body:JSON.stringify(body)});
+    showToast('Trade ajouté au journal ✓');
+    document.getElementById('signalContainer').innerHTML=`<div style="background:rgba(0,208,132,.08);border:1px solid rgba(0,208,132,.3);border-radius:12px;padding:1.25rem;text-align:center;font-family:var(--mono);color:var(--green);font-size:14px">Trade enregistré dans le journal ✓<br><span style="font-size:12px;color:var(--text3);margin-top:6px;display:block">${body.pair} ${dir} · E:${c_e} · SL:${c_sl} · TP:${c_tp}</span></div>`;
+  }catch(e){showToast('Erreur enregistrement trade')}
+}
+
+function rejectSignal(){
+  document.getElementById('signalContainer').innerHTML='';
+  document.getElementById('agentEmpty').style.display='block';
+  document.getElementById('agentEmpty').textContent='Signal ignoré. Lance une nouvelle analyse.';
+}
+
 document.getElementById('todayDate').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+
+/* ════════════════════════════════════════
+   PAGE NEWS — LOGIQUE
+════════════════════════════════════════ */
+let allNewsData=[];let currentFilter='all';let fearData=null;
+
+async function loadFearGreed(){
+  try{
+    const res=await fetch('https://api.alternative.me/fng/?limit=1');
+    const data=await res.json();
+    fearData=data.data?.[0]||null;
+  }catch(e){fearData=null;}
+}
+
+function renderFearGreed(){
+  const el=document.getElementById('fearWidget');
+  if(!el)return;
+  if(!fearData){el.style.display='none';return}
+  const score=+fearData.value;
+  const label=fearData.value_classification;
+  let color=score<25?'var(--red)':score<45?'var(--amber)':score<55?'var(--text2)':score<75?'var(--green)':'#00ff88';
+  el.style.display='flex';
+  el.innerHTML=`
+    <div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Fear & Greed</div>
+      <div class="fear-score" style="color:${color}">${score}</div>
+    </div>
+    <div style="flex:1">
+      <div class="fear-label" style="color:${color};font-weight:600;margin-bottom:6px">${label}</div>
+      <div class="fear-bar"><div class="fear-fill" style="width:${score}%;background:${color}"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px"><span>Extreme Fear</span><span>Extreme Greed</span></div>
+    </div>`;
+}
+
+async function loadFullNews(){
+  try{
+    const res=await fetch('https://cryptopanic.com/api/free/v1/posts/?auth_token=demo&public=true&kind=news&filter=rising');
+    if(!res.ok)throw new Error();
+    const data=await res.json();
+    allNewsData=data.results||[];
+    renderNewsPage();
+    newsCache=allNewsData.slice(0,5);
+    newsCacheTime=Date.now();
+    document.getElementById('newsPageTime').textContent='Mis à jour '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    document.getElementById('newsPageList').innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Impossible de charger les news.<br>Vérifie ta connexion.</div>';
+  }
+}
+
+function setNewsFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.news-filter').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderNewsPage();
+}
+
+function renderNewsPage(){
+  const list=document.getElementById('newsPageList');
+  if(!allNewsData.length){list.innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Aucune news</div>';return}
+  let filtered=allNewsData;
+  if(currentFilter==='bullish')filtered=allNewsData.filter(n=>n.votes?.positive>n.votes?.negative);
+  else if(currentFilter==='bearish')filtered=allNewsData.filter(n=>n.votes?.negative>=n.votes?.positive);
+  else if(currentFilter==='important')filtered=allNewsData.filter(n=>(n.votes?.positive||0)+(n.votes?.negative||0)>5||n.metadata?.image);
+  list.innerHTML=filtered.map(n=>{
+    const up=n.votes?.positive||0;const down=n.votes?.negative||0;
+    const isBull=up>down;const isBear=down>up;
+    const cardClass=isBull?'bull':isBear?'bear':'';
+    const time=new Date(n.published_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const date=new Date(n.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+    const currencies=(n.currencies||[]).map(c=>`<span class="nfc-currency">${c.code}</span>`).join('');
+    return`<div class="news-full-card ${cardClass}" onclick="openNewsLink('${n.url||'#'}')">
+      <div class="nfc-title">${n.title}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <div class="nfc-meta">
+          <span>${n.source?.title||'News'}</span>
+          <span>·</span>
+          <span>${date} ${time}</span>
+          ${currencies?`<span>·</span>${currencies}`:''}
+        </div>
+        <div style="display:flex;gap:6px">
+          ${up?`<div class="nfc-vote up">▲ ${up}</div>`:''}
+          ${down?`<div class="nfc-vote down">▼ ${down}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNewsLink(url){if(url&&url!=='#')window.open(url,'_blank')}
+
+function refreshNews(){
+  document.getElementById('newsPageTime').textContent='Chargement...';
+  document.getElementById('newsPageList').innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Chargement...</div>';
+  allNewsData=[];fearData=null;
+  loadFearGreed().then(()=>{renderFearGreed();loadFullNews();});
+}
+
 loadTrades();renderChecklist();loadCapital();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
 </script>
