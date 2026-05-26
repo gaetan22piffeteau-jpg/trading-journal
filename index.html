@@ -767,40 +767,73 @@ function loadApiKey(){
 }
 
 let newsCache=null;let newsCacheTime=0;
-const RSS_FEEDS=[
-  {url:'https://www.coindesk.com/arc/outboundfeeds/rss/',source:'CoinDesk'},
-  {url:'https://cointelegraph.com/rss',source:'CoinTelegraph'},
-  {url:'https://decrypt.co/feed',source:'Decrypt'}
-];
+const COINGECKO_IDS={
+  'BTC':'bitcoin','ETH':'ethereum','SOL':'solana','BNB':'binancecoin',
+  'XRP':'ripple','ADA':'cardano','AVAX':'avalanche-2','DOGE':'dogecoin',
+  'DOT':'polkadot','MATIC':'matic-network','LINK':'chainlink','LTC':'litecoin'
+};
 
-async function fetchRSSFeed(feedUrl,source){
-  const api=`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&api_key=public&count=10`;
-  const res=await fetch(api);if(!res.ok)throw new Error();
+// News via Coin Gecko trending + on génère depuis les mouvements de prix
+let priceData=[];
+
+async function loadCoinPrices(){
+  const ids=Object.values(COINGECKO_IDS).join(',');
+  const url=`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=12&sparkline=false&price_change_percentage=1h,24h,7d`;
+  const res=await fetch(url);
+  if(!res.ok)throw new Error('CoinGecko error');
+  return await res.json();
+}
+
+async function loadTrendingCoins(){
+  const res=await fetch('https://api.coingecko.com/api/v3/search/trending');
+  if(!res.ok)return[];
   const data=await res.json();
-  return(data.items||[]).map(item=>({
-    title:item.title,
-    url:item.link,
-    published_at:item.pubDate,
-    source:{title:source},
-    currencies:[],
-    sentiment:'neutral'
-  }));
+  return(data.coins||[]).slice(0,6).map(c=>c.item);
+}
+
+function generateNewsFromPrices(coins){
+  const items=[];
+  coins.forEach(c=>{
+    const chg24=c.price_change_percentage_24h||0;
+    const chg1h=c.price_change_percentage_1h_in_currency||0;
+    const sym=c.symbol.toUpperCase();
+    const price=c.current_price;
+    const fmt=price>1000?price.toLocaleString('fr-FR',{maximumFractionDigits:0}):price.toLocaleString('fr-FR',{maximumFractionDigits:4});
+    let title,sentiment;
+    if(Math.abs(chg24)>5){
+      sentiment=chg24>0?'bull':'bear';
+      title=`${sym} ${chg24>0?'bondit':'chute'} de ${Math.abs(chg24).toFixed(1)}% en 24h — Prix actuel : $${fmt}`;
+    } else if(Math.abs(chg1h)>1){
+      sentiment=chg1h>0?'bull':'bear';
+      title=`${sym} ${chg1h>0?'accélère':'recule'} de ${Math.abs(chg1h).toFixed(2)}% sur 1h — $${fmt}`;
+    } else {
+      sentiment='neutral';
+      title=`${sym} stable à $${fmt} (24h: ${chg24>0?'+':''}${chg24.toFixed(2)}%)`;
+    }
+    items.push({title,url:null,published_at:new Date().toISOString(),source:{title:'CoinGecko Live'},sentiment,coin:c});
+  });
+  items.sort((a,b)=>{
+    const scoreA=Math.abs(b.coin.price_change_percentage_24h||0);
+    const scoreB=Math.abs(a.coin.price_change_percentage_24h||0);
+    return scoreA-scoreB;
+  });
+  return items;
 }
 
 async function loadAllFeeds(){
-  const results=await Promise.allSettled(RSS_FEEDS.map(f=>fetchRSSFeed(f.url,f.source)));
-  const all=[];
-  results.forEach(r=>{if(r.status==='fulfilled')all.push(...r.value);});
-  all.sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
-  return all;
+  const coins=await loadCoinPrices();
+  priceData=coins;
+  return generateNewsFromPrices(coins);
 }
 
 async function loadNews(){
   const bar=document.getElementById('newsBar');
   const now=Date.now();
-  if(newsCache&&now-newsCacheTime<600000){renderNews(newsCache);bar.style.display='block';return}
+  if(newsCache&&now-newsCacheTime<300000){renderNews(newsCache);bar.style.display='block';return}
   try{
-    const items=await loadAllFeeds();
+    const coins=await loadCoinPrices();
+    priceData=coins;
+    const items=generateNewsFromPrices(coins);
     newsCache=items.slice(0,5);
     newsCacheTime=now;
     renderNews(newsCache);
@@ -811,12 +844,14 @@ async function loadNews(){
 
 function renderNews(items){
   const list=document.getElementById('newsList');
-  if(!items||!items.length){list.innerHTML='<div style="color:var(--text3);font-size:11px;font-family:var(--mono)">Aucune news disponible</div>';return}
+  if(!items||!items.length){list.innerHTML='<div style="color:var(--text3);font-size:11px;font-family:var(--mono)">Chargement...</div>';return}
   list.innerHTML=items.map(n=>{
-    const time=new Date(n.published_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    return`<div class="news-item"><div class="ni-title">${n.title}</div><div class="ni-meta">${n.source?.title||'News'} · ${time}</div></div>`;
+    const arrow=n.sentiment==='bull'?'↑':n.sentiment==='bear'?'↓':'→';
+    const col=n.sentiment==='bull'?'var(--green)':n.sentiment==='bear'?'var(--red)':'var(--text2)';
+    return`<div class="news-item"><div class="ni-title" style="color:${col}">${arrow} ${n.title}</div><div class="ni-meta">${n.source?.title||'Live'}</div></div>`;
   }).join('');
 }
+
 
 async function runAgent(){
   const apiKey=localStorage.getItem('anthropic_key');
@@ -1014,16 +1049,20 @@ function renderFearGreed(){
 
 async function loadFullNews(){
   try{
-    const items=await loadAllFeeds();
-    allNewsData=items;
+    const [coins,trending]=await Promise.all([loadCoinPrices(),loadTrendingCoins()]);
+    priceData=coins;
+    allNewsData=generateNewsFromPrices(coins);
+    trendingData=trending;
     renderNewsPage();
     newsCache=allNewsData.slice(0,5);
     newsCacheTime=Date.now();
     document.getElementById('newsPageTime').textContent='Mis à jour '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
-    document.getElementById('newsPageList').innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Impossible de charger les news.<br>Vérifie ta connexion.</div>';
+    document.getElementById('newsPageList').innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Impossible de charger.<br>Réessaie dans quelques secondes.</div>';
   }
 }
+
+let trendingData=[];
 
 function setNewsFilter(f,btn){
   currentFilter=f;
@@ -1034,35 +1073,49 @@ function setNewsFilter(f,btn){
 
 function renderNewsPage(){
   const list=document.getElementById('newsPageList');
-  if(!allNewsData.length){list.innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Aucune news</div>';return}
-  const keywords={bullish:['bull','surge','rally','gains','rises','up','high','record','growth','pump'],bearish:['bear','crash','drop','falls','down','low','loss','dump','decline','fear','sell']};
-  function getSentiment(title){
-    const t=title.toLowerCase();
-    const b=keywords.bullish.filter(w=>t.includes(w)).length;
-    const d=keywords.bearish.filter(w=>t.includes(w)).length;
-    return b>d?'bull':d>b?'bear':'';
-  }
-  let filtered=allNewsData;
-  if(currentFilter==='bullish')filtered=allNewsData.filter(n=>getSentiment(n.title)==='bull');
-  else if(currentFilter==='bearish')filtered=allNewsData.filter(n=>getSentiment(n.title)==='bear');
-  else if(currentFilter==='important')filtered=allNewsData.filter((n,i)=>i<15);
-  list.innerHTML=filtered.map(n=>{
-    const cardClass=getSentiment(n.title);
-    const time=new Date(n.published_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    const date=new Date(n.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-    const safeUrl=(n.url||'#').replace(/'/g,'%27');
-    return`<div class="news-full-card ${cardClass}" onclick="openNewsLink('${safeUrl}')">
-      <div class="nfc-title">${n.title}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-        <div class="nfc-meta">
-          <span>${n.source?.title||'News'}</span>
-          <span>·</span>
-          <span>${date} ${time}</span>
+  if(!priceData.length){list.innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Chargement...</div>';return}
+
+  // Section prix en grille
+  let filtered=priceData;
+  if(currentFilter==='bullish')filtered=priceData.filter(c=>(c.price_change_percentage_24h||0)>2);
+  else if(currentFilter==='bearish')filtered=priceData.filter(c=>(c.price_change_percentage_24h||0)<-2);
+  else if(currentFilter==='important')filtered=priceData.slice(0,6);
+
+  const pricesHtml=`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px">Marchés en direct</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem">
+  ${filtered.map(c=>{
+    const chg=c.price_change_percentage_24h||0;
+    const chg1h=c.price_change_percentage_1h_in_currency||0;
+    const col=chg>0?'var(--green)':chg<0?'var(--red)':'var(--text2)';
+    const price=c.current_price>1000?c.current_price.toLocaleString('fr-FR',{maximumFractionDigits:0}):c.current_price.toLocaleString('fr-FR',{maximumFractionDigits:4});
+    const border=chg>3?'rgba(0,208,132,.3)':chg<-3?'rgba(255,77,77,.3)':'var(--border)';
+    return`<div style="background:var(--bg2);border:1px solid ${border};border-radius:10px;padding:10px 12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <img src="${c.image}" width="18" height="18" style="border-radius:50%" onerror="this.style.display='none'">
+          <span style="font-size:13px;font-weight:700">${c.symbol.toUpperCase()}</span>
         </div>
-        <span class="nfc-currency">${cardClass==='bull'?'↑ Haussier':cardClass==='bear'?'↓ Baissier':'Neutre'}</span>
+        <span style="font-size:10px;font-family:var(--mono);color:${col};font-weight:600">${chg>0?'+':''}${chg.toFixed(2)}%</span>
       </div>
+      <div style="font-size:14px;font-family:var(--mono);font-weight:700">$${price}</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">1h: ${chg1h>0?'+':''}${chg1h.toFixed(2)}%</div>
     </div>`;
-  }).join('');
+  }).join('')}
+  </div>`;
+
+  // Section trending
+  let trendHtml='';
+  if(trendingData.length&&currentFilter==='all'){
+    trendHtml=`<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);margin-bottom:8px">Trending 24h</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem">
+    ${trendingData.map(c=>`<div style="background:var(--bg2);border:1px solid rgba(200,255,0,.2);border-radius:8px;padding:5px 10px;display:flex;align-items:center;gap:6px">
+      <img src="${c.thumb}" width="16" height="16" style="border-radius:50%" onerror="this.style.display='none'">
+      <span style="font-size:12px;font-family:var(--mono);color:var(--accent)">${c.symbol}</span>
+    </div>`).join('')}
+    </div>`;
+  }
+
+  list.innerHTML=pricesHtml+trendHtml;
 }
 
 function openNewsLink(url){if(url&&url!=='#')window.open(url,'_blank')}
