@@ -767,22 +767,46 @@ function loadApiKey(){
 }
 
 let newsCache=null;let newsCacheTime=0;
+const RSS_FEEDS=[
+  {url:'https://www.coindesk.com/arc/outboundfeeds/rss/',source:'CoinDesk'},
+  {url:'https://cointelegraph.com/rss',source:'CoinTelegraph'},
+  {url:'https://decrypt.co/feed',source:'Decrypt'}
+];
+
+async function fetchRSSFeed(feedUrl,source){
+  const api=`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&api_key=public&count=10`;
+  const res=await fetch(api);if(!res.ok)throw new Error();
+  const data=await res.json();
+  return(data.items||[]).map(item=>({
+    title:item.title,
+    url:item.link,
+    published_at:item.pubDate,
+    source:{title:source},
+    currencies:[],
+    sentiment:'neutral'
+  }));
+}
+
+async function loadAllFeeds(){
+  const results=await Promise.allSettled(RSS_FEEDS.map(f=>fetchRSSFeed(f.url,f.source)));
+  const all=[];
+  results.forEach(r=>{if(r.status==='fulfilled')all.push(...r.value);});
+  all.sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
+  return all;
+}
+
 async function loadNews(){
   const bar=document.getElementById('newsBar');
   const now=Date.now();
   if(newsCache&&now-newsCacheTime<600000){renderNews(newsCache);bar.style.display='block';return}
   try{
-    const res=await fetch('https://cryptopanic.com/api/free/v1/posts/?auth_token=demo&public=true&kind=news&currencies=BTC,ETH&filter=important');
-    if(!res.ok)throw new Error();
-    const data=await res.json();
-    newsCache=data.results?.slice(0,5)||[];
+    const items=await loadAllFeeds();
+    newsCache=items.slice(0,5);
     newsCacheTime=now;
     renderNews(newsCache);
     bar.style.display='block';
     document.getElementById('newsTime').textContent='· '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  }catch(e){
-    bar.style.display='none';
-  }
+  }catch(e){bar.style.display='none';}
 }
 
 function renderNews(items){
@@ -790,8 +814,7 @@ function renderNews(items){
   if(!items||!items.length){list.innerHTML='<div style="color:var(--text3);font-size:11px;font-family:var(--mono)">Aucune news disponible</div>';return}
   list.innerHTML=items.map(n=>{
     const time=new Date(n.published_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    const vote=n.votes?.positive>n.votes?.negative?'↑':'↓';
-    return`<div class="news-item"><div class="ni-title">${vote} ${n.title}</div><div class="ni-meta">${n.source?.title||'News'} · ${time}</div></div>`;
+    return`<div class="news-item"><div class="ni-title">${n.title}</div><div class="ni-meta">${n.source?.title||'News'} · ${time}</div></div>`;
   }).join('');
 }
 
@@ -991,10 +1014,8 @@ function renderFearGreed(){
 
 async function loadFullNews(){
   try{
-    const res=await fetch('https://cryptopanic.com/api/free/v1/posts/?auth_token=demo&public=true&kind=news&filter=rising');
-    if(!res.ok)throw new Error();
-    const data=await res.json();
-    allNewsData=data.results||[];
+    const items=await loadAllFeeds();
+    allNewsData=items;
     renderNewsPage();
     newsCache=allNewsData.slice(0,5);
     newsCacheTime=Date.now();
@@ -1014,30 +1035,31 @@ function setNewsFilter(f,btn){
 function renderNewsPage(){
   const list=document.getElementById('newsPageList');
   if(!allNewsData.length){list.innerHTML='<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Aucune news</div>';return}
+  const keywords={bullish:['bull','surge','rally','gains','rises','up','high','record','growth','pump'],bearish:['bear','crash','drop','falls','down','low','loss','dump','decline','fear','sell']};
+  function getSentiment(title){
+    const t=title.toLowerCase();
+    const b=keywords.bullish.filter(w=>t.includes(w)).length;
+    const d=keywords.bearish.filter(w=>t.includes(w)).length;
+    return b>d?'bull':d>b?'bear':'';
+  }
   let filtered=allNewsData;
-  if(currentFilter==='bullish')filtered=allNewsData.filter(n=>n.votes?.positive>n.votes?.negative);
-  else if(currentFilter==='bearish')filtered=allNewsData.filter(n=>n.votes?.negative>=n.votes?.positive);
-  else if(currentFilter==='important')filtered=allNewsData.filter(n=>(n.votes?.positive||0)+(n.votes?.negative||0)>5||n.metadata?.image);
+  if(currentFilter==='bullish')filtered=allNewsData.filter(n=>getSentiment(n.title)==='bull');
+  else if(currentFilter==='bearish')filtered=allNewsData.filter(n=>getSentiment(n.title)==='bear');
+  else if(currentFilter==='important')filtered=allNewsData.filter((n,i)=>i<15);
   list.innerHTML=filtered.map(n=>{
-    const up=n.votes?.positive||0;const down=n.votes?.negative||0;
-    const isBull=up>down;const isBear=down>up;
-    const cardClass=isBull?'bull':isBear?'bear':'';
+    const cardClass=getSentiment(n.title);
     const time=new Date(n.published_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     const date=new Date(n.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-    const currencies=(n.currencies||[]).map(c=>`<span class="nfc-currency">${c.code}</span>`).join('');
-    return`<div class="news-full-card ${cardClass}" onclick="openNewsLink('${n.url||'#'}')">
+    const safeUrl=(n.url||'#').replace(/'/g,'%27');
+    return`<div class="news-full-card ${cardClass}" onclick="openNewsLink('${safeUrl}')">
       <div class="nfc-title">${n.title}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
         <div class="nfc-meta">
           <span>${n.source?.title||'News'}</span>
           <span>·</span>
           <span>${date} ${time}</span>
-          ${currencies?`<span>·</span>${currencies}`:''}
         </div>
-        <div style="display:flex;gap:6px">
-          ${up?`<div class="nfc-vote up">▲ ${up}</div>`:''}
-          ${down?`<div class="nfc-vote down">▼ ${down}</div>`:''}
-        </div>
+        <span class="nfc-currency">${cardClass==='bull'?'↑ Haussier':cardClass==='bear'?'↓ Baissier':'Neutre'}</span>
       </div>
     </div>`;
   }).join('');
