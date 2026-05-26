@@ -802,7 +802,7 @@ async function fetchAINews(apiKey){
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
+      model:'claude-sonnet-4-5',
       max_tokens:1500,
       tools:[{type:'web_search_20250305',name:'web_search'}],
       messages:[{role:'user',content:'Cherche les 8 dernières actualités importantes du marché crypto du jour (Bitcoin, Ethereum, altcoins, régulation, macro). Réponds UNIQUEMENT en JSON, tableau de 8 objets avec les champs: title (titre court et précis en français), source (nom du média), sentiment ("bull", "bear" ou "neutral"), url (lien si dispo sinon null). Aucun texte avant ou après le JSON.'}]
@@ -913,7 +913,7 @@ Génère le signal JSON complet maintenant.`;
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'claude-sonnet-4-5',
         max_tokens:1000,
         system:SMC_SYSTEM_PROMPT,
         messages:[{role:'user',content:userMsg}]
