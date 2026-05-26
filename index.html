@@ -808,7 +808,7 @@ async function fetchAINews(apiKey){
   }
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'interleaved-thinking-2025-05-14','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({
       model:'claude-sonnet-4-5',
       max_tokens:1200,
@@ -868,15 +868,9 @@ async function loadNews(){
   const now=Date.now();
   if(newsCache&&now-newsCacheTime<300000){renderNews(newsCache);bar.style.display='block';return}
   try{
-    const apiKey=localStorage.getItem('anthropic_key');
-    let items;
-    if(apiKey){
-      try{items=await fetchAINews(apiKey);}catch(e){
-        const coins=await loadCoinPrices();priceData=coins;items=generateNewsFromPrices(coins);
-      }
-    }else{
-      const coins=await loadCoinPrices();priceData=coins;items=generateNewsFromPrices(coins);
-    }
+    const coins=await loadCoinPrices();
+    priceData=coins;
+    const items=generateNewsFromPrices(coins);
     newsCache=items.slice(0,5);newsCacheTime=now;
     renderNews(newsCache);bar.style.display='block';
     document.getElementById('newsTime').textContent='· '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -925,7 +919,7 @@ Génère le signal JSON complet maintenant.`;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'interleaved-thinking-2025-05-14','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
         model:'claude-sonnet-4-5',
         max_tokens:1000,
@@ -1091,56 +1085,18 @@ function renderFearGreed(){
 
 async function loadFullNews(){
   const list=document.getElementById('newsPageList');
-  const apiKey=localStorage.getItem('anthropic_key');
-
-  // Toujours charger les prix CoinGecko
-  loadCoinPrices().then(coins=>{priceData=coins;}).catch(()=>{});
-  loadTrendingCoins().then(t=>{trendingData=t;}).catch(()=>{});
-
-  if(!apiKey){
-    list.innerHTML=`<div style="background:var(--bg2);border:1px solid rgba(200,255,0,.2);border-radius:12px;padding:1.5rem;text-align:center;font-family:var(--mono);font-size:13px;line-height:2">
-      <div style="font-size:22px;margin-bottom:8px">🔑</div>
-      Pour voir les vraies news crypto,<br>entre ta clé API dans l'onglet <b style="color:var(--accent)">Agent</b><br>
-      <span style="color:var(--text3);font-size:11px">Les news sont générées par Claude avec recherche web en temps réel</span>
-    </div>`;
-    // Charger les prix quand même
-    try{
-      const coins=await loadCoinPrices();
-      priceData=coins;
-      const trending=await loadTrendingCoins();
-      trendingData=trending;
-      renderPricesSection();
-    }catch(e){}
-    return;
-  }
-
   list.innerHTML=`<div style="color:var(--text3);font-size:13px;font-family:var(--mono);text-align:center;padding:2rem 0">
     <div style="width:20px;height:20px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 12px"></div>
-    Claude recherche les dernières news...
+    Chargement des marchés...
   </div>`;
-
   try{
-    const [news,coins,trending]=await Promise.all([
-      fetchAINews(apiKey),
-      loadCoinPrices(),
-      loadTrendingCoins()
-    ]);
-    allNewsData=news;
-    priceData=coins;
-    trendingData=trending;
-    aiNewsCacheTime=Date.now();
+    const [coins,trending]=await Promise.all([loadCoinPrices(),loadTrendingCoins()]);
+    priceData=coins;trendingData=trending;
+    allNewsData=[];
     renderNewsPage();
     document.getElementById('newsPageTime').textContent='Mis à jour '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   }catch(e){
-    // Fallback prix seulement
-    try{
-      const coins=await loadCoinPrices();priceData=coins;
-      const trending=await loadTrendingCoins();trendingData=trending;
-      allNewsData=[];
-      renderNewsPage();
-    }catch(e2){}
-    list.innerHTML+='<div style="color:var(--red);font-size:11px;font-family:var(--mono);text-align:center;margin-top:8px">Erreur : '+e.message+'</div>';
-    document.getElementById('newsPageTime').textContent='Erreur';
+    list.innerHTML='<div style="color:var(--red);font-size:13px;font-family:var(--mono);text-align:center;padding:3rem 0">Erreur chargement : '+e.message+'</div>';
   }
 }
 
