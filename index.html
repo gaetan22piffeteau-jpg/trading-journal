@@ -367,11 +367,66 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <!-- ═══════════════════ CALCULATEUR ═══════════════════ -->
     <div class="page" id="page-calc">
       <div class="page-header">
-        <div><div class="page-title">Calculateur</div><div class="page-sub">Futures & levier</div></div>
+        <div><div class="page-title">Calculateur</div><div class="page-sub">Levier exact par coin · live CoinGecko</div></div>
       </div>
 
+      <!-- STEP 1 : Coin + Capital -->
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1rem">
-        <div class="form-section" style="margin-top:0">Capital & Risque</div>
+        <div class="form-section" style="margin-top:0">1 — Coin &amp; Capital</div>
+
+        <!-- Recherche coin -->
+        <div class="field" style="margin-bottom:.5rem">
+          <label>Symbole du coin</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="c-coin" placeholder="BTC, ETH, SOL..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:14px;font-family:var(--mono);outline:none;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')fetchCoin()">
+            <button onclick="fetchCoin()" id="fetchCoinBtn" style="background:var(--accent);border:none;color:#000;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--mono);white-space:nowrap;flex-shrink:0">Fetch →</button>
+          </div>
+        </div>
+
+        <!-- Carte coin (masquée au départ) -->
+        <div id="coinCard" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:.75rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <img id="cc-img" src="" width="28" height="28" style="border-radius:50%" onerror="this.style.display='none'">
+              <div>
+                <div style="font-size:15px;font-weight:700" id="cc-name">—</div>
+                <div style="font-size:11px;color:var(--text2);font-family:var(--mono)" id="cc-rank">—</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:18px;font-weight:700;font-family:var(--mono)" id="cc-price">—</div>
+              <div style="font-size:11px;font-family:var(--mono)" id="cc-chg24">—</div>
+            </div>
+          </div>
+          <!-- Métriques ligne 2 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px">
+            <div style="background:var(--bg2);border-radius:6px;padding:6px 8px;text-align:center">
+              <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">Vol. 24h</div>
+              <div style="font-size:12px;font-weight:700;font-family:var(--mono);margin-top:2px" id="cc-vol">—</div>
+            </div>
+            <div style="background:var(--bg2);border-radius:6px;padding:6px 8px;text-align:center">
+              <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">Mkt Cap</div>
+              <div style="font-size:12px;font-weight:700;font-family:var(--mono);margin-top:2px" id="cc-mcap">—</div>
+            </div>
+            <div style="background:var(--bg2);border-radius:6px;padding:6px 8px;text-align:center">
+              <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">ATH dist.</div>
+              <div style="font-size:12px;font-weight:700;font-family:var(--mono);margin-top:2px" id="cc-ath">—</div>
+            </div>
+          </div>
+          <!-- Barre volatilité -->
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:4px">
+              <span>Volatilité 24h</span>
+              <span id="cc-vol-label">—</span>
+            </div>
+            <div style="height:4px;background:var(--bg2);border-radius:2px;overflow:hidden">
+              <div id="cc-vol-bar" style="height:100%;border-radius:2px;transition:width .4s ease;width:0%"></div>
+            </div>
+          </div>
+          <!-- Avertissement volatilité si besoin -->
+          <div id="cc-vol-warn" style="display:none;margin-top:8px;font-size:11px;font-family:var(--mono);padding:6px 10px;border-radius:6px;line-height:1.6"></div>
+        </div>
+
         <div class="row2">
           <div class="field">
             <label>Capital total ($)</label>
@@ -391,62 +446,81 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
           <label>Risque % personnalisé</label>
           <input type="number" id="c-risk-custom" placeholder="2.5" step="0.1" oninput="calcLevier()">
         </div>
+      </div>
 
-        <div class="form-section">Niveaux du trade</div>
+      <!-- STEP 2 : Niveaux -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1rem">
+        <div class="form-section" style="margin-top:0">2 — Niveaux du trade</div>
         <div class="row2">
           <div class="field">
             <label>Direction</label>
             <select id="c-dir" onchange="calcLevier()"><option>Long</option><option>Short</option></select>
           </div>
           <div class="field">
-            <label>Prix d'entrée</label>
-            <input type="number" id="c-entry" placeholder="67450" step="any" oninput="calcLevier()">
+            <label>Prix d'entrée <span id="c-entry-live-label" style="color:var(--accent);font-size:10px"></span></label>
+            <input type="number" id="c-entry" placeholder="Prix live ou manuel" step="any" oninput="calcLevier()">
           </div>
         </div>
         <div class="row2">
           <div class="field">
             <label>Stop Loss</label>
-            <input type="number" id="c-sl" placeholder="67080" step="any" oninput="calcLevier()">
+            <input type="number" id="c-sl" placeholder="En dessous du support" step="any" oninput="calcLevier()">
           </div>
           <div class="field">
             <label>Take Profit</label>
-            <input type="number" id="c-tp" placeholder="68190" step="any" oninput="calcLevier()">
+            <input type="number" id="c-tp" placeholder="Résistance cible" step="any" oninput="calcLevier()">
           </div>
         </div>
+        <!-- Validation SL vs volatilité -->
+        <div id="sl-vol-check" style="display:none;font-size:11px;font-family:var(--mono);padding:6px 10px;border-radius:6px;line-height:1.6;margin-top:-4px"></div>
       </div>
 
-      <!-- Résultat calculateur -->
+      <!-- RÉSULTAT -->
       <div id="calcResult" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1rem">
-        <div class="form-section" style="margin-top:0">Résultat</div>
-        <div class="row2" style="margin-bottom:10px">
-          <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em">Levier</div>
-            <div id="r-lev" style="font-size:30px;font-weight:700;font-family:var(--mono);color:var(--accent);margin-top:4px">—</div>
+        <div class="form-section" style="margin-top:0">Résultat exact</div>
+
+        <!-- Levier + Position — gros chiffres -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:var(--bg3);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Levier exact</div>
+            <div id="r-lev-exact" style="font-size:13px;font-family:var(--mono);color:var(--text3)">—</div>
+            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">Arrondi exchange ↓</div>
+            <div id="r-lev" style="font-size:32px;font-weight:700;font-family:var(--mono);color:var(--accent);margin-top:2px;line-height:1">—</div>
           </div>
-          <div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em">Taille position</div>
-            <div id="r-size" style="font-size:30px;font-weight:700;font-family:var(--mono);color:var(--blue);margin-top:4px">—</div>
-          </div>
-        </div>
-        <div class="row3" style="margin-bottom:10px">
-          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">Risque $</div>
-            <div id="r-risk" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--red);margin-top:2px">—</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">Gain potentiel</div>
-            <div id="r-gain" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--green);margin-top:2px">—</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">R:R</div>
-            <div id="r-rr" style="font-size:16px;font-weight:700;font-family:var(--mono);margin-top:2px">—</div>
+          <div style="background:var(--bg3);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Taille position</div>
+            <div id="r-size-coins" style="font-size:13px;font-family:var(--mono);color:var(--text3)">—</div>
+            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">En USD</div>
+            <div id="r-size" style="font-size:32px;font-weight:700;font-family:var(--mono);color:var(--blue);margin-top:2px;line-height:1">—</div>
           </div>
         </div>
+
+        <!-- P&L + RR -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">Risque $</div>
+            <div id="r-risk" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--red);margin-top:3px">—</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">Gain potentiel</div>
+            <div id="r-gain" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--green);margin-top:3px">—</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">R:R</div>
+            <div id="r-rr" style="font-size:16px;font-weight:700;font-family:var(--mono);margin-top:3px">—</div>
+          </div>
+        </div>
+
+        <!-- Avertissements -->
         <div id="r-warn" style="display:none;background:rgba(255,77,77,.07);border:1px solid rgba(255,77,77,.2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--mono);color:var(--red);margin-bottom:8px;line-height:1.8"></div>
-        <div id="r-detail" style="font-size:11px;color:var(--text3);font-family:var(--mono);line-height:1.9;padding:8px 10px;background:var(--bg3);border-radius:6px"></div>
+
+        <!-- Détail complet -->
+        <div id="r-detail" style="font-size:11px;color:var(--text3);font-family:var(--mono);line-height:2;padding:10px 12px;background:var(--bg3);border-radius:6px"></div>
+
         <button onclick="sendToForm()" style="width:100%;margin-top:10px;padding:11px;border-radius:8px;border:1px solid rgba(200,255,0,.25);background:rgba(200,255,0,.07);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--mono)">→ Envoyer dans le formulaire</button>
       </div>
 
+      <!-- Paliers -->
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
         <div class="form-section" style="margin-top:0">Paliers de risque SMC</div>
         <div id="paliers"><div style="color:var(--text3);font-size:12px;font-family:var(--mono)">Entre ton capital ci-dessus</div></div>
@@ -1261,12 +1335,176 @@ function refreshNews(){
 }
 
 /* ════════════════════════════════════════
-   CALCULATEUR FUTURES
+   CALCULATEUR FUTURES — COIN LIVE
 ════════════════════════════════════════ */
+
+// Map ticker → id CoinGecko (les + tradés)
+const COIN_IDS={
+  BTC:'bitcoin',ETH:'ethereum',SOL:'solana',BNB:'binancecoin',
+  XRP:'ripple',ADA:'cardano',AVAX:'avalanche-2',DOGE:'dogecoin',
+  LINK:'chainlink',DOT:'polkadot',MATIC:'matic-network',ATOM:'cosmos',
+  LTC:'litecoin',UNI:'uniswap',AAVE:'aave',OP:'optimism',
+  ARB:'arbitrum',APT:'aptos',SUI:'sui',INJ:'injective-protocol',
+  TIA:'celestia',NEAR:'near',FTM:'fantom',SAND:'the-sandbox',
+  MANA:'decentraland',CRV:'curve-dao-token',MKR:'maker',
+  COMP:'compound-governance-token',SNX:'havven',FIL:'filecoin',
+  ICP:'internet-computer',HBAR:'hedera-hashgraph',XLM:'stellar',
+  VET:'vechain',EOS:'eos',THETA:'theta-token',GRT:'the-graph',
+  ALGO:'algorand',EGLD:'elrond-erd-2',XMR:'monero',ETC:'ethereum-classic',
+  TON:'the-open-network',PEPE:'pepe',WIF:'dogwifcoin',BONK:'bonk',
+  JUP:'jupiter-exchange-solana',PYTH:'pyth-network',JTO:'jito-governance-token',
+  W:'wormhole',STRK:'starknet',BLUR:'blur',DYDX:'dydx',
+  SEI:'sei-network',TRX:'tron',XTZ:'tezos',FLOW:'flow'
+};
+
+let coinData=null; // données live du coin fetchées
+
 function onRiskChange(){
   document.getElementById('customRiskWrap').style.display=
     document.getElementById('c-risk').value==='custom'?'block':'none';
   calcLevier();
+}
+
+async function fetchCoin(){
+  const sym=document.getElementById('c-coin').value.trim().toUpperCase();
+  if(!sym){showToast('Entre un symbole (ex: BTC)');return;}
+
+  const btn=document.getElementById('fetchCoinBtn');
+  btn.innerHTML='<span class="loader"></span>';
+  btn.disabled=true;
+
+  // Chercher l'id CoinGecko
+  let cgId=COIN_IDS[sym];
+
+  // Si pas dans la map, tenter une recherche via /search
+  if(!cgId){
+    try{
+      const sr=await fetch('https://api.coingecko.com/api/v3/search?query='+sym);
+      const sd=await sr.json();
+      const match=sd.coins?.find(c=>c.symbol.toUpperCase()===sym);
+      if(match)cgId=match.id;
+    }catch(e){}
+  }
+
+  if(!cgId){
+    showToast('Coin "'+sym+'" introuvable','error');
+    btn.innerHTML='Fetch →';btn.disabled=false;
+    return;
+  }
+
+  try{
+    const r=await fetch(
+      'https://api.coingecko.com/api/v3/coins/'+cgId+
+      '?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false'
+    );
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    coinData={
+      id:cgId,sym,
+      name:d.name,
+      image:d.image?.small||'',
+      price:d.market_data.current_price.usd,
+      chg24:d.market_data.price_change_percentage_24h||0,
+      chg7d:d.market_data.price_change_percentage_7d||0,
+      high24:d.market_data.high_24h.usd,
+      low24:d.market_data.low_24h.usd,
+      vol24:d.market_data.total_volume.usd,
+      mcap:d.market_data.market_cap.usd,
+      mcapRank:d.market_cap_rank,
+      ath:d.market_data.ath.usd,
+      athChg:d.market_data.ath_change_percentage.usd,
+      supply:d.market_data.circulating_supply,
+      totalSupply:d.market_data.total_supply,
+    };
+    // Volatilité 24h = range (high-low)/low * 100
+    coinData.vol24pct=((coinData.high24-coinData.low24)/coinData.low24)*100;
+
+    renderCoinCard();
+    // Pré-remplir le prix d'entrée avec le prix live
+    document.getElementById('c-entry').value=coinData.price;
+    document.getElementById('c-entry-live-label').textContent='← live';
+    // Aussi remplir la paire dans le form trade
+    document.getElementById('f-pair').value=sym;
+    calcLevier();
+    showToast(d.name+' chargé ✓');
+  }catch(e){
+    showToast('Erreur CoinGecko : '+e.message,'error');
+    coinData=null;
+  }
+  btn.innerHTML='Fetch →';btn.disabled=false;
+}
+
+function renderCoinCard(){
+  if(!coinData)return;
+  const card=document.getElementById('coinCard');
+  card.style.display='block';
+
+  document.getElementById('cc-img').src=coinData.image;
+  document.getElementById('cc-name').textContent=coinData.name+' ('+coinData.sym+')';
+  document.getElementById('cc-rank').textContent='Rang #'+coinData.mcapRank;
+
+  // Prix
+  const p=coinData.price;
+  const priceStr=p>=1000?'$'+p.toLocaleString('en-US',{maximumFractionDigits:0}):
+                 p>=1?'$'+p.toFixed(2):'$'+p.toPrecision(4);
+  document.getElementById('cc-price').textContent=priceStr;
+
+  // Variation 24h
+  const chg=coinData.chg24;
+  const chgEl=document.getElementById('cc-chg24');
+  chgEl.textContent=(chg>0?'+':'')+chg.toFixed(2)+'% (24h)';
+  chgEl.style.color=chg>0?'var(--green)':chg<0?'var(--red)':'var(--text2)';
+
+  // Volume
+  document.getElementById('cc-vol').textContent=fmtBig(coinData.vol24);
+
+  // Mkt cap
+  document.getElementById('cc-mcap').textContent=fmtBig(coinData.mcap);
+
+  // Dist ATH
+  const athChg=coinData.athChg;
+  const athEl=document.getElementById('cc-ath');
+  athEl.textContent=(athChg>0?'+':'')+athChg.toFixed(1)+'%';
+  athEl.style.color=athChg>-20?'var(--green)':athChg>-50?'var(--amber)':'var(--text2)';
+
+  // Barre volatilité 24h range
+  const vol=coinData.vol24pct;
+  const volBar=document.getElementById('cc-vol-bar');
+  const volLabel=document.getElementById('cc-vol-label');
+  // 0-2% = faible, 2-5% = modérée, 5-10% = haute, >10% = extrême
+  const volPct=Math.min(vol/12*100,100);
+  const volCol=vol<2?'var(--green)':vol<5?'var(--amber)':vol<10?'var(--red)':'#ff0000';
+  volBar.style.width=volPct+'%';
+  volBar.style.background=volCol;
+  const volText=vol<2?'Faible':vol<5?'Modérée':vol<10?'Haute':'Extrême';
+  volLabel.textContent=volText+' · '+vol.toFixed(2)+'% (H/L 24h)';
+  volLabel.style.color=volCol;
+
+  // Avertissement volatilité
+  const warnEl=document.getElementById('cc-vol-warn');
+  if(vol>8){
+    warnEl.style.display='block';
+    warnEl.style.background='rgba(255,77,77,.07)';
+    warnEl.style.border='1px solid rgba(255,77,77,.2)';
+    warnEl.style.color='var(--red)';
+    warnEl.innerHTML='⚠ Volatilité très haute ('+vol.toFixed(1)+'% range 24h). Levier élevé = liquidation rapide. Réduis le levier ou élargis le SL.';
+  } else if(vol>4){
+    warnEl.style.display='block';
+    warnEl.style.background='rgba(245,166,35,.07)';
+    warnEl.style.border='1px solid rgba(245,166,35,.2)';
+    warnEl.style.color='var(--amber)';
+    warnEl.innerHTML='ℹ Volatilité modérée ('+vol.toFixed(1)+'% range 24h). Place ton SL en dehors du range quotidien.';
+  } else {
+    warnEl.style.display='none';
+  }
+}
+
+function fmtBig(n){
+  if(!n)return'—';
+  if(n>=1e12)return'$'+(n/1e12).toFixed(2)+'T';
+  if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B';
+  if(n>=1e6)return'$'+(n/1e6).toFixed(1)+'M';
+  return'$'+n.toFixed(0);
 }
 
 function calcLevier(){
@@ -1279,58 +1517,145 @@ function calcLevier(){
   const tp=+document.getElementById('c-tp').value||0;
   const res=document.getElementById('calcResult');
 
-  if(!capital||!riskPct||!entry||!sl){res.style.display='none';renderPaliers();return;}
+  if(!capital||!riskPct||!entry||!sl){res.style.display='none';renderPaliers();checkSlVsVol();return;}
 
+  // ── Calculs de base ──────────────────────────────────────────────────────
   const riskUsd=capital*(riskPct/100);
-  const slDist=dir==='Long'?(entry-sl)/entry*100:(sl-entry)/entry*100;
-  if(slDist<=0){res.style.display='none';return;}
 
+  // Distance SL en % par rapport au prix d'entrée
+  const slDist=dir==='Long'
+    ?(entry-sl)/entry*100
+    :(sl-entry)/entry*100;
+
+  if(slDist<=0){
+    res.style.display='none';
+    document.getElementById('r-warn').style.display='block';
+    document.getElementById('r-warn').textContent='⚠ SL mal placé par rapport à la direction.';
+    return;
+  }
+
+  // Taille position pour risquer exactement riskUsd avec ce SL
+  // posSize × (slDist/100) = riskUsd  →  posSize = riskUsd / (slDist/100)
   const posSize=riskUsd/(slDist/100);
-  const levier=posSize/capital;
-  const levArrondi=Math.ceil(levier*10)/10;
 
+  // Levier = posSize / capital  (levier exact, pas arrondi)
+  const levierExact=posSize/capital;
+
+  // Arrondi vers le bas au 0.1x le plus proche (on prend jamais plus que le levier exact)
+  const levierArrondi=Math.floor(levierExact*10)/10;
+  // Recalcul position avec levier arrondi (plus conservateur)
+  const posSizeArrondi=capital*levierArrondi;
+  // Risque réel avec le levier arrondi
+  const riskReel=posSizeArrondi*(slDist/100);
+
+  // TP
   let gainUsd=null,rr=null,tpDist=null;
   if(tp){
     tpDist=dir==='Long'?(tp-entry)/entry*100:(entry-tp)/entry*100;
-    gainUsd=posSize*(tpDist/100);
-    rr=gainUsd/riskUsd;
+    gainUsd=posSizeArrondi*(tpDist/100);
+    rr=gainUsd/riskReel;
   }
 
-  const liqDist=100/levArrondi;
-  const liqPrice=dir==='Long'?entry*(1-liqDist/100):entry*(1+liqDist/100);
+  // Liquidation théorique (sans frais, avec maintenance margin ~0.5%)
+  // Prix liquidation Long: entry × (1 - (1/levier - 0.005))
+  // Prix liquidation Short: entry × (1 + (1/levier - 0.005))
+  const maint=0.005; // 0.5% maintenance margin standard
+  const liqLong=entry*(1-(1/levierArrondi-maint));
+  const liqShort=entry*(1+(1/levierArrondi-maint));
+  const liqPrice=dir==='Long'?liqLong:liqShort;
+  const distLiq=dir==='Long'
+    ?(entry-liqPrice)/entry*100
+    :(liqPrice-entry)/entry*100;
 
+  // Nb de coins
+  const nbCoins=coinData?posSizeArrondi/coinData.price:null;
+
+  // ── Avertissements ───────────────────────────────────────────────────────
   const warns=[];
-  if(levier>50)warns.push('⚠ Levier >50x — liquidation quasi-certaine');
-  else if(levier>20)warns.push('⚠ Levier >20x — risque très élevé');
-  if(riskPct>5)warns.push('⚠ Risque >5% — hors règles SMC');
-  if(rr!==null&&rr<2)warns.push('⚠ RR < 2:1 — hors stratégie recommandée');
-  if(slDist>10)warns.push('⚠ SL très large (>10% de mouvement)');
+  if(levierExact>100)warns.push('🔴 Levier >100x — REFUSE par tous les exchanges. Elargis ton SL ou réduis le risque.');
+  else if(levierExact>50)warns.push('🔴 Levier >50x — extrêmement dangereux, liquidation quasi-certaine.');
+  else if(levierExact>20)warns.push('🟠 Levier >20x — risque très élevé, réfléchis à élargir le SL.');
+  if(riskPct>5)warns.push('⚠ Risque >5% du capital — hors règles SMC.');
+  if(rr!==null&&rr<1.5)warns.push('⚠ R:R < 1.5 — setup peu intéressant.');
+  if(slDist<0.3)warns.push('⚠ SL très serré (<0.3%) — risque de liquidation par spread/frais.');
+  if(coinData&&slDist<coinData.vol24pct*0.3)
+    warns.push('⚠ SL dans le range de volatilité normal du coin ('+coinData.vol24pct.toFixed(1)+'% range 24h) — risque de stop hunt.');
+  // Vérifier que le SL est bien côté opposé à la direction
+  if(dir==='Long'&&sl>=entry)warns.push('⚠ SL au-dessus du prix d\'entrée pour un Long.');
+  if(dir==='Short'&&sl<=entry)warns.push('⚠ SL en dessous du prix d\'entrée pour un Short.');
 
   res.style.display='block';
 
+  // Levier exact + arrondi
+  document.getElementById('r-lev-exact').textContent='Exact: '+levierExact.toFixed(3)+'x';
   const levEl=document.getElementById('r-lev');
-  levEl.textContent=levArrondi.toFixed(1)+'x';
-  levEl.style.color=levier>20?'var(--red)':levier>10?'var(--amber)':'var(--accent)';
+  levEl.textContent=levierArrondi.toFixed(1)+'x';
+  levEl.style.color=levierExact>20?'var(--red)':levierExact>10?'var(--amber)':'var(--accent)';
 
-  document.getElementById('r-size').textContent='$'+posSize.toFixed(0);
-  document.getElementById('r-risk').textContent='-$'+riskUsd.toFixed(2);
+  // Position
+  if(nbCoins){
+    const nbStr=nbCoins>=1?nbCoins.toFixed(3):nbCoins.toFixed(6);
+    document.getElementById('r-size-coins').textContent=nbStr+' '+coinData.sym;
+  } else {
+    document.getElementById('r-size-coins').textContent='(entre le symbole)';
+  }
+  document.getElementById('r-size').textContent='$'+posSizeArrondi.toFixed(0);
+
+  // Risque / Gain
+  document.getElementById('r-risk').textContent='-$'+riskReel.toFixed(2);
   document.getElementById('r-gain').textContent=gainUsd?'+$'+gainUsd.toFixed(2):'—';
 
   const rrEl=document.getElementById('r-rr');
   rrEl.textContent=rr?'1:'+rr.toFixed(2):'—';
-  rrEl.style.color=rr?(rr>=2?'var(--green)':rr>=1?'var(--amber)':'var(--red)'):'var(--text2)';
+  rrEl.style.color=rr?(rr>=2?'var(--green)':rr>=1.5?'var(--amber)':'var(--red)'):'var(--text2)';
 
+  // Warnings
   const warnEl=document.getElementById('r-warn');
   if(warns.length){warnEl.style.display='block';warnEl.innerHTML=warns.join('<br>');}
   else warnEl.style.display='none';
 
+  // Détail
+  const prixFmt=(v)=>{
+    if(!v)return'—';
+    return v>=1000?'$'+v.toLocaleString('en-US',{maximumFractionDigits:0}):
+           v>=1?'$'+v.toFixed(2):'$'+v.toPrecision(4);
+  };
   document.getElementById('r-detail').innerHTML=
     'Capital: <b>$'+capital+'</b> &nbsp;·&nbsp; Risque: <b>'+riskPct+'%</b> = <b style="color:var(--red)">$'+riskUsd.toFixed(2)+'</b><br>'+
-    'Distance SL: <b>'+slDist.toFixed(2)+'%</b> &nbsp;·&nbsp; Position: <b>$'+posSize.toFixed(0)+'</b><br>'+
-    'Levier exact: '+levier.toFixed(3)+'x &nbsp;→&nbsp; Utilise <b style="color:var(--accent)">'+levArrondi.toFixed(1)+'x</b><br>'+
-    'Liquidation ≈ <b style="color:var(--red)">$'+liqPrice.toFixed(0)+'</b>'+(tpDist?' &nbsp;·&nbsp; Dist. TP: <b>'+tpDist.toFixed(2)+'%</b>':'');
+    'Entrée: <b>'+prixFmt(entry)+'</b> &nbsp;·&nbsp; SL: <b style="color:var(--red)">'+prixFmt(sl)+'</b>'+(tp?' &nbsp;·&nbsp; TP: <b style="color:var(--green)">'+prixFmt(tp)+'</b>':'')+'<br>'+
+    'Distance SL: <b>'+slDist.toFixed(3)+'%</b> &nbsp;·&nbsp; Position: <b>$'+posSizeArrondi.toFixed(0)+'</b>'+(nbCoins?' (<b>'+( nbCoins>=1?nbCoins.toFixed(3):nbCoins.toFixed(6))+'</b> '+coinData.sym+')':'')+'<br>'+
+    'Levier exact: <b>'+levierExact.toFixed(4)+'x</b> &nbsp;→&nbsp; Paramètre: <b style="color:var(--accent)">'+levierArrondi.toFixed(1)+'x</b><br>'+
+    'Liquidation ≈ <b style="color:var(--red)">'+prixFmt(liqPrice)+'</b> (dist: <b>'+distLiq.toFixed(2)+'%</b>)'+(tpDist?' &nbsp;·&nbsp; Dist. TP: <b>'+tpDist.toFixed(2)+'%</b>':'');
 
+  checkSlVsVol();
   renderPaliers();
+}
+
+// Vérification SL par rapport à la volatilité du coin
+function checkSlVsVol(){
+  const el=document.getElementById('sl-vol-check');
+  if(!coinData||!el){if(el)el.style.display='none';return;}
+  const entry=+document.getElementById('c-entry').value||0;
+  const sl=+document.getElementById('c-sl').value||0;
+  const dir=document.getElementById('c-dir').value;
+  if(!entry||!sl){el.style.display='none';return;}
+
+  const slDist=dir==='Long'?(entry-sl)/entry*100:(sl-entry)/entry*100;
+  if(slDist<=0){el.style.display='none';return;}
+
+  const vol=coinData.vol24pct; // range H/L 24h en %
+  el.style.display='block';
+
+  if(slDist<vol*0.25){
+    el.style.background='rgba(255,77,77,.08)';el.style.border='1px solid rgba(255,77,77,.2)';el.style.color='var(--red)';
+    el.innerHTML='🔴 SL très serré ('+slDist.toFixed(2)+'%) vs range 24h du coin ('+vol.toFixed(1)+'%). Risque de stop hunt élevé.';
+  } else if(slDist<vol*0.5){
+    el.style.background='rgba(245,166,35,.08)';el.style.border='1px solid rgba(245,166,35,.2)';el.style.color='var(--amber)';
+    el.innerHTML='🟡 SL serré ('+slDist.toFixed(2)+'%) vs range 24h ('+vol.toFixed(1)+'%). Pense à placer le SL sous une structure solide.';
+  } else {
+    el.style.background='rgba(0,208,132,.08)';el.style.border='1px solid rgba(0,208,132,.2)';el.style.color='var(--green)';
+    el.innerHTML='✅ SL correct ('+slDist.toFixed(2)+'%) par rapport à la volatilité 24h du coin ('+vol.toFixed(1)+'%).';
+  }
 }
 
 function sendToForm(){
@@ -1340,11 +1665,13 @@ function sendToForm(){
   const dir=document.getElementById('c-dir').value;
   const levText=document.getElementById('r-lev').textContent;
   const lev=parseFloat(levText)||'';
+  const coin=document.getElementById('c-coin').value.trim().toUpperCase();
   if(entry)document.getElementById('f-entry').value=entry;
   if(sl)document.getElementById('f-sl').value=sl;
   if(tp)document.getElementById('f-tp').value=tp;
   if(dir)document.getElementById('f-dir').value=dir;
   if(lev)document.getElementById('f-lev').value=lev;
+  if(coin)document.getElementById('f-pair').value=coin;
   nav('nouveau');
   showToast('Niveaux envoyés dans le formulaire ✓');
 }
