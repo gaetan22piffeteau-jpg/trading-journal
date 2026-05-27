@@ -1508,127 +1508,200 @@ function fmtBig(n){
 }
 
 function calcLevier(){
-  const capital=+document.getElementById('c-capital').value||0;
-  const riskSel=document.getElementById('c-risk').value;
-  const riskPct=riskSel==='custom'?(+document.getElementById('c-risk-custom').value||0):(+riskSel);
-  const dir=document.getElementById('c-dir').value;
-  const entry=+document.getElementById('c-entry').value||0;
-  const sl=+document.getElementById('c-sl').value||0;
-  const tp=+document.getElementById('c-tp').value||0;
-  const res=document.getElementById('calcResult');
+  const capital  = +document.getElementById('c-capital').value || 0;
+  const riskSel  = document.getElementById('c-risk').value;
+  const riskPct  = riskSel==='custom' ? (+document.getElementById('c-risk-custom').value||0) : (+riskSel);
+  const dir      = document.getElementById('c-dir').value;
+  const entry    = +document.getElementById('c-entry').value || 0;
+  const sl       = +document.getElementById('c-sl').value    || 0;
+  const tp       = +document.getElementById('c-tp').value    || 0;
+  const res      = document.getElementById('calcResult');
+  const warnEl   = document.getElementById('r-warn');
 
   if(!capital||!riskPct||!entry||!sl){res.style.display='none';renderPaliers();checkSlVsVol();return;}
 
-  // ── Calculs de base ──────────────────────────────────────────────────────
-  const riskUsd=capital*(riskPct/100);
-
-  // Distance SL en % par rapport au prix d'entrée
-  const slDist=dir==='Long'
-    ?(entry-sl)/entry*100
-    :(sl-entry)/entry*100;
-
-  if(slDist<=0){
-    res.style.display='none';
-    document.getElementById('r-warn').style.display='block';
-    document.getElementById('r-warn').textContent='⚠ SL mal placé par rapport à la direction.';
+  // ── Validation direction SL ──────────────────────────────────────────────
+  if(dir==='Long' && sl>=entry){
+    res.style.display='block';
+    warnEl.style.display='block';
+    warnEl.innerHTML='⚠ SL ('+sl+') doit être EN DESSOUS du prix d\'entrée ('+entry+') pour un Long.';
+    document.getElementById('r-lev').textContent='—';
+    document.getElementById('r-size').textContent='—';
+    document.getElementById('r-risk').textContent='—';
+    document.getElementById('r-gain').textContent='—';
+    document.getElementById('r-rr').textContent='—';
+    document.getElementById('r-detail').textContent='';
+    return;
+  }
+  if(dir==='Short' && sl<=entry){
+    res.style.display='block';
+    warnEl.style.display='block';
+    warnEl.innerHTML='⚠ SL ('+sl+') doit être AU DESSUS du prix d\'entrée ('+entry+') pour un Short.';
+    document.getElementById('r-lev').textContent='—';
+    document.getElementById('r-size').textContent='—';
+    document.getElementById('r-risk').textContent='—';
+    document.getElementById('r-gain').textContent='—';
+    document.getElementById('r-rr').textContent='—';
+    document.getElementById('r-detail').textContent='';
     return;
   }
 
-  // Taille position pour risquer exactement riskUsd avec ce SL
-  // posSize × (slDist/100) = riskUsd  →  posSize = riskUsd / (slDist/100)
-  const posSize=riskUsd/(slDist/100);
+  // ── Calculs fondamentaux ─────────────────────────────────────────────────
+  const riskUsd = capital * (riskPct / 100);
 
-  // Levier = posSize / capital  (levier exact, pas arrondi)
-  const levierExact=posSize/capital;
+  // Distance SL en % par rapport au prix d'entrée (toujours positive ici)
+  const slDist = dir==='Long'
+    ? (entry - sl) / entry * 100
+    : (sl - entry) / entry * 100;
 
-  // Arrondi vers le bas au 0.1x le plus proche (on prend jamais plus que le levier exact)
-  const levierArrondi=Math.floor(levierExact*10)/10;
-  // Recalcul position avec levier arrondi (plus conservateur)
-  const posSizeArrondi=capital*levierArrondi;
-  // Risque réel avec le levier arrondi
-  const riskReel=posSizeArrondi*(slDist/100);
+  // Position théorique pour risquer exactement riskUsd
+  // Raisonnement : si je perds slDist% sur ma position → posSize × (slDist/100) = riskUsd
+  const posTheo = riskUsd / (slDist / 100);
 
-  // TP
-  let gainUsd=null,rr=null,tpDist=null;
-  if(tp){
-    tpDist=dir==='Long'?(tp-entry)/entry*100:(entry-tp)/entry*100;
-    gainUsd=posSizeArrondi*(tpDist/100);
-    rr=gainUsd/riskReel;
+  // Levier théorique exact (peut être < 1 si risque % trop petit vs distance SL)
+  const levTheo = posTheo / capital;
+
+  // ── Cas levier < 1x : pas de futures nécessaire ──────────────────────────
+  // Sur les exchanges futures, levier minimum = 1x (tu dois au moins utiliser 100% de ta mise)
+  // Si levTheo < 1 → tu n'as même pas besoin de levier, tu peux faire le trade en SPOT
+  // On force 1x et on recalcule le risque réel avec position = capital
+  const sousLevier = levTheo < 1;
+  const levierFinal = sousLevier ? 1 : levTheo;
+
+  // Arrondi exchange : vers le bas au 0.5x le plus proche (≥ 1x)
+  // Ex: 3.78x → 3.5x   |   7.2x → 7x   |   1.3x → 1x
+  let levierArrondi;
+  if(levierFinal < 2)        levierArrondi = 1;
+  else if(levierFinal < 5)   levierArrondi = Math.floor(levierFinal);        // arrondi à 1x
+  else if(levierFinal < 20)  levierArrondi = Math.floor(levierFinal / 0.5) * 0.5; // arrondi à 0.5x
+  else                       levierArrondi = Math.floor(levierFinal);        // arrondi à 1x
+
+  // Position réelle avec le levier arrondi
+  const posReelle = capital * levierArrondi;
+  // Risque réel (peut différer du risque théorique à cause de l'arrondi)
+  const riskReel  = posReelle * (slDist / 100);
+
+  // ── TP / RR ─────────────────────────────────────────────────────────────
+  let gainUsd=null, rr=null, tpDist=null;
+  if(tp && ((dir==='Long'&&tp>entry)||(dir==='Short'&&tp<entry))){
+    tpDist   = dir==='Long' ? (tp-entry)/entry*100 : (entry-tp)/entry*100;
+    gainUsd  = posReelle * (tpDist / 100);
+    rr       = gainUsd / riskReel;
   }
 
-  // Liquidation théorique (sans frais, avec maintenance margin ~0.5%)
-  // Prix liquidation Long: entry × (1 - (1/levier - 0.005))
-  // Prix liquidation Short: entry × (1 + (1/levier - 0.005))
-  const maint=0.005; // 0.5% maintenance margin standard
-  const liqLong=entry*(1-(1/levierArrondi-maint));
-  const liqShort=entry*(1+(1/levierArrondi-maint));
-  const liqPrice=dir==='Long'?liqLong:liqShort;
-  const distLiq=dir==='Long'
-    ?(entry-liqPrice)/entry*100
-    :(liqPrice-entry)/entry*100;
+  // ── Liquidation (seulement si levier >= 1x) ──────────────────────────────
+  // Formule exchange standard avec maintenance margin 0.5%
+  // Long  : liq = entry × (1 − 1/levier + maint)  ← prix descend jusqu'à perte totale du margin
+  // Short : liq = entry × (1 + 1/levier − maint)
+  // Avec levier = 1 : liq Long ≈ entry×0.005 (presque 0, jamais liquidé en pratique)
+  const maint = 0.005;
+  let liqPrice = null, distLiq = null;
+  if(levierArrondi >= 1){
+    liqPrice = dir==='Long'
+      ? entry * (1 - (1/levierArrondi) + maint)
+      : entry * (1 + (1/levierArrondi) - maint);
+    // Sanity check : liquidation doit être entre 0 et l'entrée (Long) ou > entrée (Short)
+    if(liqPrice > 0 && ((dir==='Long' && liqPrice < entry) || (dir==='Short' && liqPrice > entry))){
+      distLiq = dir==='Long'
+        ? (entry - liqPrice) / entry * 100
+        : (liqPrice - entry) / entry * 100;
+    } else {
+      liqPrice = null; // valeur aberrante, on n'affiche pas
+    }
+  }
 
-  // Nb de coins
-  const nbCoins=coinData?posSizeArrondi/coinData.price:null;
+  // Nb de coins dans la position
+  const nbCoins = coinData ? posReelle / coinData.price : null;
 
   // ── Avertissements ───────────────────────────────────────────────────────
-  const warns=[];
-  if(levierExact>100)warns.push('🔴 Levier >100x — REFUSE par tous les exchanges. Elargis ton SL ou réduis le risque.');
-  else if(levierExact>50)warns.push('🔴 Levier >50x — extrêmement dangereux, liquidation quasi-certaine.');
-  else if(levierExact>20)warns.push('🟠 Levier >20x — risque très élevé, réfléchis à élargir le SL.');
-  if(riskPct>5)warns.push('⚠ Risque >5% du capital — hors règles SMC.');
-  if(rr!==null&&rr<1.5)warns.push('⚠ R:R < 1.5 — setup peu intéressant.');
-  if(slDist<0.3)warns.push('⚠ SL très serré (<0.3%) — risque de liquidation par spread/frais.');
-  if(coinData&&slDist<coinData.vol24pct*0.3)
-    warns.push('⚠ SL dans le range de volatilité normal du coin ('+coinData.vol24pct.toFixed(1)+'% range 24h) — risque de stop hunt.');
-  // Vérifier que le SL est bien côté opposé à la direction
-  if(dir==='Long'&&sl>=entry)warns.push('⚠ SL au-dessus du prix d\'entrée pour un Long.');
-  if(dir==='Short'&&sl<=entry)warns.push('⚠ SL en dessous du prix d\'entrée pour un Short.');
+  const warns = [];
 
-  res.style.display='block';
-
-  // Levier exact + arrondi
-  document.getElementById('r-lev-exact').textContent='Exact: '+levierExact.toFixed(3)+'x';
-  const levEl=document.getElementById('r-lev');
-  levEl.textContent=levierArrondi.toFixed(1)+'x';
-  levEl.style.color=levierExact>20?'var(--red)':levierExact>10?'var(--amber)':'var(--accent)';
-
-  // Position
-  if(nbCoins){
-    const nbStr=nbCoins>=1?nbCoins.toFixed(3):nbCoins.toFixed(6);
-    document.getElementById('r-size-coins').textContent=nbStr+' '+coinData.sym;
-  } else {
-    document.getElementById('r-size-coins').textContent='(entre le symbole)';
+  if(sousLevier){
+    warns.push('ℹ Levier théorique < 1x : avec '+riskPct+'% de risque et '+slDist.toFixed(2)+'% de distance SL, tu n\'as pas besoin de levier. Tu peux faire ce trade en SPOT. En futures : levier forcé à 1x, risque réel = <b>$'+riskReel.toFixed(2)+'</b> ('+((riskReel/capital)*100).toFixed(2)+'% du capital).');
   }
-  document.getElementById('r-size').textContent='$'+posSizeArrondi.toFixed(0);
 
-  // Risque / Gain
-  document.getElementById('r-risk').textContent='-$'+riskReel.toFixed(2);
-  document.getElementById('r-gain').textContent=gainUsd?'+$'+gainUsd.toFixed(2):'—';
+  if(!sousLevier){
+    if(levTheo > 100) warns.push('🔴 Levier nécessaire >100x — refusé par tous les exchanges. Élargis ton SL ou augmente ton risque %.');
+    else if(levTheo > 50) warns.push('🔴 Levier >50x — extrêmement dangereux. Liquidation quasi-certaine.');
+    else if(levTheo > 20) warns.push('🟠 Levier >20x — risque très élevé. Réfléchis à élargir le SL.');
+  }
+  if(riskPct > 5)  warns.push('⚠ Risque >5% du capital — hors règles SMC.');
+  if(rr !== null && rr < 1.5) warns.push('⚠ R:R '+rr.toFixed(2)+' < 1.5 — setup peu intéressant.');
+  if(slDist < 0.3) warns.push('⚠ SL très serré (<0.3%) — risque de stop hunt par spread/frais.');
+  if(coinData && slDist < coinData.vol24pct * 0.3)
+    warns.push('⚠ SL dans le range normal du coin ('+coinData.vol24pct.toFixed(1)+'% range 24h) — risque de stop hunt.');
+  if(liqPrice && dir==='Long' && liqPrice > sl)
+    warns.push('⚠ Prix de liquidation ('+prixFmt(liqPrice)+') EST AU DESSUS de ton SL → tu seras liquidé avant d\'atteindre ton SL !');
+  if(liqPrice && dir==='Short' && liqPrice < sl)
+    warns.push('⚠ Prix de liquidation ('+prixFmt(liqPrice)+') EST EN DESSOUS de ton SL → tu seras liquidé avant d\'atteindre ton SL !');
 
-  const rrEl=document.getElementById('r-rr');
-  rrEl.textContent=rr?'1:'+rr.toFixed(2):'—';
-  rrEl.style.color=rr?(rr>=2?'var(--green)':rr>=1.5?'var(--amber)':'var(--red)'):'var(--text2)';
+  res.style.display = 'block';
 
-  // Warnings
-  const warnEl=document.getElementById('r-warn');
-  if(warns.length){warnEl.style.display='block';warnEl.innerHTML=warns.join('<br>');}
+  // ── Affichage levier ─────────────────────────────────────────────────────
+  document.getElementById('r-lev-exact').textContent = sousLevier
+    ? 'Théorique: '+levTheo.toFixed(3)+'x → pas de levier nécessaire'
+    : 'Exact: '+levTheo.toFixed(3)+'x';
+
+  const levEl = document.getElementById('r-lev');
+  if(sousLevier){
+    levEl.textContent = '1x';
+    levEl.style.color = 'var(--blue)';
+  } else {
+    levEl.textContent = levierArrondi % 1 === 0 ? levierArrondi+'x' : levierArrondi.toFixed(1)+'x';
+    levEl.style.color = levTheo>20 ? 'var(--red)' : levTheo>10 ? 'var(--amber)' : 'var(--accent)';
+  }
+
+  // ── Affichage position ───────────────────────────────────────────────────
+  if(nbCoins){
+    const nbStr = nbCoins >= 1 ? nbCoins.toFixed(4) : nbCoins.toFixed(6);
+    document.getElementById('r-size-coins').textContent = nbStr + ' ' + coinData.sym;
+  } else {
+    document.getElementById('r-size-coins').textContent = '(fetch un coin pour voir les unités)';
+  }
+  document.getElementById('r-size').textContent = '$' + posReelle.toFixed(0);
+
+  // ── Risque / Gain / RR ───────────────────────────────────────────────────
+  document.getElementById('r-risk').textContent = '-$' + riskReel.toFixed(2);
+  if(riskReel !== riskUsd && !sousLevier){
+    document.getElementById('r-risk').title = 'Risque théorique $'+riskUsd.toFixed(2)+', ajusté à $'+riskReel.toFixed(2)+' après arrondi levier';
+  }
+  document.getElementById('r-gain').textContent = gainUsd ? '+$'+gainUsd.toFixed(2) : '—';
+
+  const rrEl = document.getElementById('r-rr');
+  rrEl.textContent  = rr ? '1:'+rr.toFixed(2) : '—';
+  rrEl.style.color  = rr ? (rr>=2?'var(--green)':rr>=1.5?'var(--amber)':'var(--red)') : 'var(--text2)';
+
+  // ── Warnings ─────────────────────────────────────────────────────────────
+  if(warns.length){ warnEl.style.display='block'; warnEl.innerHTML=warns.join('<br>'); }
   else warnEl.style.display='none';
 
-  // Détail
-  const prixFmt=(v)=>{
-    if(!v)return'—';
-    return v>=1000?'$'+v.toLocaleString('en-US',{maximumFractionDigits:0}):
-           v>=1?'$'+v.toFixed(2):'$'+v.toPrecision(4);
-  };
-  document.getElementById('r-detail').innerHTML=
-    'Capital: <b>$'+capital+'</b> &nbsp;·&nbsp; Risque: <b>'+riskPct+'%</b> = <b style="color:var(--red)">$'+riskUsd.toFixed(2)+'</b><br>'+
+  // ── Détail complet ───────────────────────────────────────────────────────
+  const liqLine = liqPrice && distLiq
+    ? 'Liquidation ≈ <b style="color:var(--red)">'+prixFmt(liqPrice)+'</b> (dist: <b>'+distLiq.toFixed(2)+'%</b>)'
+    : 'Liquidation : <span style="color:var(--text3)">N/A (levier 1x, pertes limitées à ton capital)</span>';
+
+  document.getElementById('r-detail').innerHTML =
+    'Capital: <b>$'+capital+'</b> &nbsp;·&nbsp; Risque demandé: <b>'+riskPct+'%</b> = <b style="color:var(--red)">$'+riskUsd.toFixed(2)+'</b><br>'+
     'Entrée: <b>'+prixFmt(entry)+'</b> &nbsp;·&nbsp; SL: <b style="color:var(--red)">'+prixFmt(sl)+'</b>'+(tp?' &nbsp;·&nbsp; TP: <b style="color:var(--green)">'+prixFmt(tp)+'</b>':'')+'<br>'+
-    'Distance SL: <b>'+slDist.toFixed(3)+'%</b> &nbsp;·&nbsp; Position: <b>$'+posSizeArrondi.toFixed(0)+'</b>'+(nbCoins?' (<b>'+( nbCoins>=1?nbCoins.toFixed(3):nbCoins.toFixed(6))+'</b> '+coinData.sym+')':'')+'<br>'+
-    'Levier exact: <b>'+levierExact.toFixed(4)+'x</b> &nbsp;→&nbsp; Paramètre: <b style="color:var(--accent)">'+levierArrondi.toFixed(1)+'x</b><br>'+
-    'Liquidation ≈ <b style="color:var(--red)">'+prixFmt(liqPrice)+'</b> (dist: <b>'+distLiq.toFixed(2)+'%</b>)'+(tpDist?' &nbsp;·&nbsp; Dist. TP: <b>'+tpDist.toFixed(2)+'%</b>':'');
+    'Distance SL: <b>'+slDist.toFixed(3)+'%</b>'+(tpDist?' &nbsp;·&nbsp; Distance TP: <b>'+tpDist.toFixed(3)+'%</b>':'')+'<br>'+
+    'Position: <b>$'+posReelle.toFixed(0)+'</b>'+(nbCoins?' = <b>'+(nbCoins>=1?nbCoins.toFixed(4):nbCoins.toFixed(6))+'</b> '+coinData.sym:'')+'<br>'+
+    (sousLevier
+      ? 'Levier: <b style="color:var(--blue)">1x</b> (théorique '+levTheo.toFixed(3)+'x — SPOT suffisant)<br>'
+      : 'Levier exact: <b>'+levTheo.toFixed(4)+'x</b> &nbsp;→&nbsp; Paramètre exchange: <b style="color:var(--accent)">'+levierArrondi+(levierArrondi%1===0?'':'')+'x</b><br>')+
+    'Risque réel: <b style="color:var(--red)">-$'+riskReel.toFixed(2)+'</b>'+(gainUsd?' &nbsp;·&nbsp; Gain potentiel: <b style="color:var(--green)">+$'+gainUsd.toFixed(2)+'</b>':'')+'<br>'+
+    liqLine;
 
   checkSlVsVol();
   renderPaliers();
+}
+
+// Helper format prix (utilisé dans calcLevier)
+function prixFmt(v){
+  if(!v && v!==0) return '—';
+  if(v<=0) return '$0';
+  return v>=1000
+    ? '$'+v.toLocaleString('en-US',{maximumFractionDigits:0})
+    : v>=1 ? '$'+v.toFixed(2) : '$'+v.toPrecision(4);
 }
 
 // Vérification SL par rapport à la volatilité du coin
