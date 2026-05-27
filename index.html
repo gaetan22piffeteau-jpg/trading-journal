@@ -477,44 +477,67 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
       <!-- RÉSULTAT -->
       <div id="calcResult" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1rem">
-        <div class="form-section" style="margin-top:0">Résultat exact</div>
+        <div class="form-section" style="margin-top:0">Résultat</div>
 
-        <!-- Levier + Position — gros chiffres -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div style="background:var(--bg3);border-radius:10px;padding:14px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Levier exact</div>
-            <div id="r-lev-exact" style="font-size:13px;font-family:var(--mono);color:var(--text3)">—</div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">Arrondi exchange ↓</div>
-            <div id="r-lev" style="font-size:32px;font-weight:700;font-family:var(--mono);color:var(--accent);margin-top:2px;line-height:1">—</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:10px;padding:14px;text-align:center">
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Taille position</div>
-            <div id="r-size-coins" style="font-size:13px;font-family:var(--mono);color:var(--text3)">—</div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">En USD</div>
-            <div id="r-size" style="font-size:32px;font-weight:700;font-family:var(--mono);color:var(--blue);margin-top:2px;line-height:1">—</div>
+        <!-- Équation visuelle : Margin × Levier = Position -->
+        <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;text-align:center">Ce que tu ouvres sur l'exchange</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+            <!-- Margin -->
+            <div style="text-align:center">
+              <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:3px">Margin déposée</div>
+              <div id="r-margin" style="font-size:26px;font-weight:700;font-family:var(--mono);color:var(--amber)">—</div>
+              <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">= capital × risque%</div>
+            </div>
+            <!-- × -->
+            <div style="font-size:22px;color:var(--text3);font-family:var(--mono);font-weight:300">×</div>
+            <!-- Levier -->
+            <div style="text-align:center">
+              <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:3px">Levier</div>
+              <div id="r-lev" style="font-size:26px;font-weight:700;font-family:var(--mono);color:var(--accent)">—</div>
+              <div id="r-lev-exact" style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">exact: —</div>
+            </div>
+            <!-- = -->
+            <div style="font-size:22px;color:var(--text3);font-family:var(--mono);font-weight:300">=</div>
+            <!-- Position -->
+            <div style="text-align:center">
+              <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:3px">Position totale</div>
+              <div id="r-size" style="font-size:26px;font-weight:700;font-family:var(--mono);color:var(--blue)">—</div>
+              <div id="r-size-coins" style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">— coins</div>
+            </div>
           </div>
         </div>
 
-        <!-- P&L + RR -->
+        <!-- P&L si SL / si TP + RR -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">Risque $</div>
-            <div id="r-risk" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--red);margin-top:3px">—</div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">Si SL touché</div>
+            <div id="r-risk" style="font-size:17px;font-weight:700;font-family:var(--mono);color:var(--red)">—</div>
+            <div id="r-risk-pct" style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">— % capital</div>
           </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">Gain potentiel</div>
-            <div id="r-gain" style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--green);margin-top:3px">—</div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">Si TP touché</div>
+            <div id="r-gain" style="font-size:17px;font-weight:700;font-family:var(--mono);color:var(--green)">—</div>
+            <div id="r-gain-pct" style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">— % capital</div>
           </div>
-          <div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase">R:R</div>
-            <div id="r-rr" style="font-size:16px;font-weight:700;font-family:var(--mono);margin-top:3px">—</div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">R:R</div>
+            <div id="r-rr" style="font-size:17px;font-weight:700;font-family:var(--mono)">—</div>
+            <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">ratio risque/gain</div>
           </div>
+        </div>
+
+        <!-- Liquidation -->
+        <div id="r-liq-box" style="display:none;background:rgba(255,77,77,.06);border:1px solid rgba(255,77,77,.15);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--mono);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span style="color:var(--text2)">Liquidation ≈</span>
+          <span id="r-liq-price" style="color:var(--red);font-weight:700;font-size:15px">—</span>
+          <span id="r-liq-dist" style="color:var(--text3);font-size:11px">dist: —</span>
         </div>
 
         <!-- Avertissements -->
-        <div id="r-warn" style="display:none;background:rgba(255,77,77,.07);border:1px solid rgba(255,77,77,.2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--mono);color:var(--red);margin-bottom:8px;line-height:1.8"></div>
+        <div id="r-warn" style="display:none;background:rgba(255,77,77,.07);border:1px solid rgba(255,77,77,.2);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--mono);color:var(--red);margin-bottom:8px;line-height:1.9"></div>
 
-        <!-- Détail complet -->
+        <!-- Récap one-liner -->
         <div id="r-detail" style="font-size:11px;color:var(--text3);font-family:var(--mono);line-height:2;padding:10px 12px;background:var(--bg3);border-radius:6px"></div>
 
         <button onclick="sendToForm()" style="width:100%;margin-top:10px;padding:11px;border-radius:8px;border:1px solid rgba(200,255,0,.25);background:rgba(200,255,0,.07);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--mono)">→ Envoyer dans le formulaire</button>
@@ -1520,180 +1543,210 @@ function calcLevier(){
 
   if(!capital||!riskPct||!entry||!sl){res.style.display='none';renderPaliers();checkSlVsVol();return;}
 
-  // ── Validation direction SL ──────────────────────────────────────────────
+  /* ════════════════════════════════════════════════════════
+     LOGIQUE FUTURES CORRECTE
+     
+     margin    = capital × risque%       ← tu déposes ça sur l'exchange
+     slDist%   = |entrée - SL| / entrée  ← % de mouvement jusqu'au SL
+     
+     Pour perdre EXACTEMENT margin$ si SL touché :
+       position × slDist% = margin
+       position = margin / slDist%
+       levier   = position / margin = 1 / slDist%
+     
+     Ex: margin=$50, slDist=1.058%
+       position = $50 / 0.01058 = $4727
+       levier   = $4727 / $50   = 94.5x  (trop élevé → on cap)
+     
+     Ex: margin=$50, slDist=10%
+       position = $50 / 0.10 = $500
+       levier   = $500 / $50  = 10x  ✓
+  ═══════════════════════════════════════════════════════ */
+
+  // ── Validation direction SL ──────────────────────────
   if(dir==='Long' && sl>=entry){
     res.style.display='block';
     warnEl.style.display='block';
-    warnEl.innerHTML='⚠ SL ('+sl+') doit être EN DESSOUS du prix d\'entrée ('+entry+') pour un Long.';
-    document.getElementById('r-lev').textContent='—';
-    document.getElementById('r-size').textContent='—';
-    document.getElementById('r-risk').textContent='—';
-    document.getElementById('r-gain').textContent='—';
-    document.getElementById('r-rr').textContent='—';
-    document.getElementById('r-detail').textContent='';
+    warnEl.innerHTML='⚠ SL doit être EN DESSOUS du prix d\'entrée pour un Long.';
+    ['r-margin','r-lev','r-size','r-risk','r-gain','r-rr'].forEach(id=>{
+      const el=document.getElementById(id); if(el)el.textContent='—';
+    });
+    document.getElementById('r-liq-box').style.display='none';
     return;
   }
   if(dir==='Short' && sl<=entry){
     res.style.display='block';
     warnEl.style.display='block';
-    warnEl.innerHTML='⚠ SL ('+sl+') doit être AU DESSUS du prix d\'entrée ('+entry+') pour un Short.';
-    document.getElementById('r-lev').textContent='—';
-    document.getElementById('r-size').textContent='—';
-    document.getElementById('r-risk').textContent='—';
-    document.getElementById('r-gain').textContent='—';
-    document.getElementById('r-rr').textContent='—';
-    document.getElementById('r-detail').textContent='';
+    warnEl.innerHTML='⚠ SL doit être AU DESSUS du prix d\'entrée pour un Short.';
+    ['r-margin','r-lev','r-size','r-risk','r-gain','r-rr'].forEach(id=>{
+      const el=document.getElementById(id); if(el)el.textContent='—';
+    });
+    document.getElementById('r-liq-box').style.display='none';
     return;
   }
 
-  // ── Calculs fondamentaux ─────────────────────────────────────────────────
-  const riskUsd = capital * (riskPct / 100);
+  // ── Calculs ──────────────────────────────────────────
+  // Margin = ce que tu déposes (capital × risque%)
+  const margin  = capital * (riskPct / 100);
 
-  // Distance SL en % par rapport au prix d'entrée (toujours positive ici)
-  const slDist = dir==='Long'
+  // Distance SL en % depuis l'entrée
+  const slDist  = dir==='Long'
     ? (entry - sl) / entry * 100
     : (sl - entry) / entry * 100;
 
-  // Position théorique pour risquer exactement riskUsd
-  // Raisonnement : si je perds slDist% sur ma position → posSize × (slDist/100) = riskUsd
-  const posTheo = riskUsd / (slDist / 100);
+  // Position pour perdre exactement margin$ si SL touché
+  // position × slDist% = margin  →  position = margin / (slDist/100)
+  const posTheo  = margin / (slDist / 100);
 
-  // Levier théorique exact (peut être < 1 si risque % trop petit vs distance SL)
-  const levTheo = posTheo / capital;
+  // Levier théorique = position / margin
+  const levTheo  = posTheo / margin;
 
-  // ── Cas levier < 1x : pas de futures nécessaire ──────────────────────────
-  // Sur les exchanges futures, levier minimum = 1x (tu dois au moins utiliser 100% de ta mise)
-  // Si levTheo < 1 → tu n'as même pas besoin de levier, tu peux faire le trade en SPOT
-  // On force 1x et on recalcule le risque réel avec position = capital
-  const sousLevier = levTheo < 1;
-  const levierFinal = sousLevier ? 1 : levTheo;
+  // ── Levier trop élevé ? On cap et on recalcule ───────
+  const MAX_LEV = 100;
+  const levCapped = levTheo > MAX_LEV;
+  const levierFinal = Math.min(levTheo, MAX_LEV);
 
-  // Arrondi exchange : vers le bas au 0.5x le plus proche (≥ 1x)
-  // Ex: 3.78x → 3.5x   |   7.2x → 7x   |   1.3x → 1x
+  // Arrondi exchange vers le BAS (jamais dépasser le levier exact)
   let levierArrondi;
-  if(levierFinal < 2)        levierArrondi = 1;
-  else if(levierFinal < 5)   levierArrondi = Math.floor(levierFinal);        // arrondi à 1x
-  else if(levierFinal < 20)  levierArrondi = Math.floor(levierFinal / 0.5) * 0.5; // arrondi à 0.5x
-  else                       levierArrondi = Math.floor(levierFinal);        // arrondi à 1x
+  if(levierFinal <= 1)        levierArrondi = 1;
+  else if(levierFinal < 2)    levierArrondi = 1;
+  else if(levierFinal < 5)    levierArrondi = Math.floor(levierFinal);
+  else if(levierFinal < 10)   levierArrondi = Math.floor(levierFinal / 0.5) * 0.5;
+  else if(levierFinal < 25)   levierArrondi = Math.floor(levierFinal);
+  else if(levierFinal < 50)   levierArrondi = Math.floor(levierFinal / 5) * 5;
+  else                        levierArrondi = Math.floor(levierFinal / 10) * 10;
 
-  // Position réelle avec le levier arrondi
-  const posReelle = capital * levierArrondi;
-  // Risque réel (peut différer du risque théorique à cause de l'arrondi)
-  const riskReel  = posReelle * (slDist / 100);
+  // Position réelle avec levier arrondi
+  // position = margin × levier
+  const posReelle = margin * levierArrondi;
 
-  // ── TP / RR ─────────────────────────────────────────────────────────────
+  // Perte réelle si SL touché
+  const perteReelle = posReelle * (slDist / 100);
+
+  // ── TP ───────────────────────────────────────────────
   let gainUsd=null, rr=null, tpDist=null;
   if(tp && ((dir==='Long'&&tp>entry)||(dir==='Short'&&tp<entry))){
-    tpDist   = dir==='Long' ? (tp-entry)/entry*100 : (entry-tp)/entry*100;
-    gainUsd  = posReelle * (tpDist / 100);
-    rr       = gainUsd / riskReel;
+    tpDist  = dir==='Long' ? (tp-entry)/entry*100 : (entry-tp)/entry*100;
+    gainUsd = posReelle * (tpDist / 100);
+    rr      = gainUsd / perteReelle;
   }
 
-  // ── Liquidation (seulement si levier >= 1x) ──────────────────────────────
-  // Formule exchange standard avec maintenance margin 0.5%
-  // Long  : liq = entry × (1 − 1/levier + maint)  ← prix descend jusqu'à perte totale du margin
-  // Short : liq = entry × (1 + 1/levier − maint)
-  // Avec levier = 1 : liq Long ≈ entry×0.005 (presque 0, jamais liquidé en pratique)
-  const maint = 0.005;
+  // ── Liquidation ──────────────────────────────────────
+  // Formule standard : quand toute la margin est perdue
+  // Long  : liq = entry × (1 - 1/levier + maint%)
+  // Short : liq = entry × (1 + 1/levier - maint%)
+  const maint = 0.005; // 0.5% maintenance margin
   let liqPrice = null, distLiq = null;
-  if(levierArrondi >= 1){
-    liqPrice = dir==='Long'
+  if(levierArrondi > 1){
+    const liq = dir==='Long'
       ? entry * (1 - (1/levierArrondi) + maint)
       : entry * (1 + (1/levierArrondi) - maint);
-    // Sanity check : liquidation doit être entre 0 et l'entrée (Long) ou > entrée (Short)
-    if(liqPrice > 0 && ((dir==='Long' && liqPrice < entry) || (dir==='Short' && liqPrice > entry))){
-      distLiq = dir==='Long'
-        ? (entry - liqPrice) / entry * 100
-        : (liqPrice - entry) / entry * 100;
-    } else {
-      liqPrice = null; // valeur aberrante, on n'affiche pas
+    if(liq > 0 && ((dir==='Long'&&liq<entry)||(dir==='Short'&&liq>entry))){
+      liqPrice = liq;
+      distLiq  = dir==='Long' ? (entry-liq)/entry*100 : (liq-entry)/entry*100;
     }
   }
 
-  // Nb de coins dans la position
+  // Nb de coins
   const nbCoins = coinData ? posReelle / coinData.price : null;
 
-  // ── Avertissements ───────────────────────────────────────────────────────
+  // ── Warnings ─────────────────────────────────────────
   const warns = [];
-
-  if(sousLevier){
-    warns.push('ℹ Levier théorique < 1x : avec '+riskPct+'% de risque et '+slDist.toFixed(2)+'% de distance SL, tu n\'as pas besoin de levier. Tu peux faire ce trade en SPOT. En futures : levier forcé à 1x, risque réel = <b>$'+riskReel.toFixed(2)+'</b> ('+((riskReel/capital)*100).toFixed(2)+'% du capital).');
-  }
-
-  if(!sousLevier){
-    if(levTheo > 100) warns.push('🔴 Levier nécessaire >100x — refusé par tous les exchanges. Élargis ton SL ou augmente ton risque %.');
-    else if(levTheo > 50) warns.push('🔴 Levier >50x — extrêmement dangereux. Liquidation quasi-certaine.');
-    else if(levTheo > 20) warns.push('🟠 Levier >20x — risque très élevé. Réfléchis à élargir le SL.');
-  }
-  if(riskPct > 5)  warns.push('⚠ Risque >5% du capital — hors règles SMC.');
-  if(rr !== null && rr < 1.5) warns.push('⚠ R:R '+rr.toFixed(2)+' < 1.5 — setup peu intéressant.');
-  if(slDist < 0.3) warns.push('⚠ SL très serré (<0.3%) — risque de stop hunt par spread/frais.');
+  if(levCapped)
+    warns.push('🔴 Levier théorique '+levTheo.toFixed(0)+'x — refusé par les exchanges (max 100x). Ton SL de '+slDist.toFixed(2)+'% est trop serré pour ce risque%. Élargis le SL ou augmente le risque%.');
+  else if(levierFinal > 50)
+    warns.push('🔴 Levier '+levierArrondi+'x — extrêmement dangereux. Liquidation quasi-certaine.');
+  else if(levierFinal > 20)
+    warns.push('🟠 Levier '+levierArrondi+'x — risque élevé. Vérifie bien ton SL.');
+  if(riskPct > 5)
+    warns.push('⚠ Risque >5% du capital — hors règles SMC.');
+  if(rr !== null && rr < 1.5)
+    warns.push('⚠ R:R '+rr.toFixed(2)+' — trop faible (< 1.5).');
+  if(slDist < 0.3)
+    warns.push('⚠ SL très serré (<0.3%) — risque de stop hunt par spread/frais.');
   if(coinData && slDist < coinData.vol24pct * 0.3)
-    warns.push('⚠ SL dans le range normal du coin ('+coinData.vol24pct.toFixed(1)+'% range 24h) — risque de stop hunt.');
+    warns.push('⚠ SL ('+slDist.toFixed(2)+'%) dans le range normal du coin ('+coinData.vol24pct.toFixed(1)+'% / 24h) — risque de stop hunt.');
   if(liqPrice && dir==='Long' && liqPrice > sl)
-    warns.push('⚠ Prix de liquidation ('+prixFmt(liqPrice)+') EST AU DESSUS de ton SL → tu seras liquidé avant d\'atteindre ton SL !');
+    warns.push('🔴 Liquidation ('+prixFmt(liqPrice)+') AU-DESSUS de ton SL ('+prixFmt(sl)+') — tu seras liquidé AVANT d\'atteindre le SL !');
   if(liqPrice && dir==='Short' && liqPrice < sl)
-    warns.push('⚠ Prix de liquidation ('+prixFmt(liqPrice)+') EST EN DESSOUS de ton SL → tu seras liquidé avant d\'atteindre ton SL !');
+    warns.push('🔴 Liquidation ('+prixFmt(liqPrice)+') EN-DESSOUS de ton SL ('+prixFmt(sl)+') — tu seras liquidé AVANT d\'atteindre le SL !');
 
   res.style.display = 'block';
 
-  // ── Affichage levier ─────────────────────────────────────────────────────
-  document.getElementById('r-lev-exact').textContent = sousLevier
-    ? 'Théorique: '+levTheo.toFixed(3)+'x → pas de levier nécessaire'
-    : 'Exact: '+levTheo.toFixed(3)+'x';
+  // ── Affichage ─────────────────────────────────────────
 
+  // Margin
+  const mEl = document.getElementById('r-margin');
+  if(mEl) mEl.textContent = '$'+margin.toFixed(2);
+
+  // Levier
   const levEl = document.getElementById('r-lev');
-  if(sousLevier){
-    levEl.textContent = '1x';
-    levEl.style.color = 'var(--blue)';
-  } else {
-    levEl.textContent = levierArrondi % 1 === 0 ? levierArrondi+'x' : levierArrondi.toFixed(1)+'x';
-    levEl.style.color = levTheo>20 ? 'var(--red)' : levTheo>10 ? 'var(--amber)' : 'var(--accent)';
+  const levStr = levierArrondi % 1 === 0 ? levierArrondi+'x' : levierArrondi.toFixed(1)+'x';
+  levEl.textContent = levStr;
+  levEl.style.color = levierFinal>20?'var(--red)':levierFinal>10?'var(--amber)':'var(--accent)';
+
+  const levExactEl = document.getElementById('r-lev-exact');
+  if(levExactEl) levExactEl.textContent = 'exact: '+levTheo.toFixed(2)+'x';
+
+  // Position
+  document.getElementById('r-size').textContent = '$'+posReelle.toFixed(0);
+  const coinsEl = document.getElementById('r-size-coins');
+  if(coinsEl){
+    coinsEl.textContent = nbCoins
+      ? (nbCoins>=1?nbCoins.toFixed(4):nbCoins.toFixed(6))+' '+coinData.sym
+      : '— (fetch un coin)';
   }
 
-  // ── Affichage position ───────────────────────────────────────────────────
-  if(nbCoins){
-    const nbStr = nbCoins >= 1 ? nbCoins.toFixed(4) : nbCoins.toFixed(6);
-    document.getElementById('r-size-coins').textContent = nbStr + ' ' + coinData.sym;
-  } else {
-    document.getElementById('r-size-coins').textContent = '(fetch un coin pour voir les unités)';
-  }
-  document.getElementById('r-size').textContent = '$' + posReelle.toFixed(0);
+  // Perte si SL / Gain si TP / RR
+  document.getElementById('r-risk').textContent = '-$'+perteReelle.toFixed(2);
+  const riskPctEl = document.getElementById('r-risk-pct');
+  if(riskPctEl) riskPctEl.textContent = (perteReelle/capital*100).toFixed(2)+'% capital';
 
-  // ── Risque / Gain / RR ───────────────────────────────────────────────────
-  document.getElementById('r-risk').textContent = '-$' + riskReel.toFixed(2);
-  if(riskReel !== riskUsd && !sousLevier){
-    document.getElementById('r-risk').title = 'Risque théorique $'+riskUsd.toFixed(2)+', ajusté à $'+riskReel.toFixed(2)+' après arrondi levier';
-  }
   document.getElementById('r-gain').textContent = gainUsd ? '+$'+gainUsd.toFixed(2) : '—';
+  const gainPctEl = document.getElementById('r-gain-pct');
+  if(gainPctEl) gainPctEl.textContent = gainUsd ? '+'+(gainUsd/capital*100).toFixed(2)+'% capital' : '—';
 
   const rrEl = document.getElementById('r-rr');
-  rrEl.textContent  = rr ? '1:'+rr.toFixed(2) : '—';
-  rrEl.style.color  = rr ? (rr>=2?'var(--green)':rr>=1.5?'var(--amber)':'var(--red)') : 'var(--text2)';
+  rrEl.textContent = rr ? '1:'+rr.toFixed(2) : '—';
+  rrEl.style.color = rr ? (rr>=2?'var(--green)':rr>=1.5?'var(--amber)':'var(--red)') : 'var(--text2)';
 
-  // ── Warnings ─────────────────────────────────────────────────────────────
+  // Liquidation
+  const liqBox = document.getElementById('r-liq-box');
+  if(liqBox){
+    if(liqPrice && distLiq){
+      liqBox.style.display = 'flex';
+      document.getElementById('r-liq-price').textContent = prixFmt(liqPrice);
+      document.getElementById('r-liq-dist').textContent  = 'dist: '+distLiq.toFixed(2)+'%';
+    } else {
+      liqBox.style.display = 'none';
+    }
+  }
+
+  // Warnings
   if(warns.length){ warnEl.style.display='block'; warnEl.innerHTML=warns.join('<br>'); }
   else warnEl.style.display='none';
 
-  // ── Détail complet ───────────────────────────────────────────────────────
-  const liqLine = liqPrice && distLiq
-    ? 'Liquidation ≈ <b style="color:var(--red)">'+prixFmt(liqPrice)+'</b> (dist: <b>'+distLiq.toFixed(2)+'%</b>)'
-    : 'Liquidation : <span style="color:var(--text3)">N/A (levier 1x, pertes limitées à ton capital)</span>';
-
+  // Récap détail
   document.getElementById('r-detail').innerHTML =
-    'Capital: <b>$'+capital+'</b> &nbsp;·&nbsp; Risque demandé: <b>'+riskPct+'%</b> = <b style="color:var(--red)">$'+riskUsd.toFixed(2)+'</b><br>'+
-    'Entrée: <b>'+prixFmt(entry)+'</b> &nbsp;·&nbsp; SL: <b style="color:var(--red)">'+prixFmt(sl)+'</b>'+(tp?' &nbsp;·&nbsp; TP: <b style="color:var(--green)">'+prixFmt(tp)+'</b>':'')+'<br>'+
-    'Distance SL: <b>'+slDist.toFixed(3)+'%</b>'+(tpDist?' &nbsp;·&nbsp; Distance TP: <b>'+tpDist.toFixed(3)+'%</b>':'')+'<br>'+
-    'Position: <b>$'+posReelle.toFixed(0)+'</b>'+(nbCoins?' = <b>'+(nbCoins>=1?nbCoins.toFixed(4):nbCoins.toFixed(6))+'</b> '+coinData.sym:'')+'<br>'+
-    (sousLevier
-      ? 'Levier: <b style="color:var(--blue)">1x</b> (théorique '+levTheo.toFixed(3)+'x — SPOT suffisant)<br>'
-      : 'Levier exact: <b>'+levTheo.toFixed(4)+'x</b> &nbsp;→&nbsp; Paramètre exchange: <b style="color:var(--accent)">'+levierArrondi+(levierArrondi%1===0?'':'')+'x</b><br>')+
-    'Risque réel: <b style="color:var(--red)">-$'+riskReel.toFixed(2)+'</b>'+(gainUsd?' &nbsp;·&nbsp; Gain potentiel: <b style="color:var(--green)">+$'+gainUsd.toFixed(2)+'</b>':'')+'<br>'+
-    liqLine;
+    'Margin déposée: <b style="color:var(--amber)">$'+margin.toFixed(2)+'</b>'
+    +' &nbsp;×&nbsp; Levier: <b style="color:var(--accent)">'+levStr+'</b>'
+    +' &nbsp;=&nbsp; Position: <b style="color:var(--blue)">$'+posReelle.toFixed(0)+'</b>'
+    +(nbCoins?' (<b>'+(nbCoins>=1?nbCoins.toFixed(4):nbCoins.toFixed(6))+'</b> '+coinData.sym+')':'')
+    +'<br>'
+    +'Entrée: <b>'+prixFmt(entry)+'</b>'
+    +' &nbsp;·&nbsp; SL: <b style="color:var(--red)">'+prixFmt(sl)+'</b> (dist: <b>'+slDist.toFixed(3)+'%</b>)'
+    +(tp?' &nbsp;·&nbsp; TP: <b style="color:var(--green)">'+prixFmt(tp)+'</b>'+(tpDist?' (dist: <b>'+tpDist.toFixed(3)+'%</b>)':''):'')
+    +'<br>'
+    +'Si SL touché → <b style="color:var(--red)">-$'+perteReelle.toFixed(2)+'</b>'
+    +' ('+( perteReelle/capital*100).toFixed(2)+'% du capital)'
+    +(gainUsd?' &nbsp;·&nbsp; Si TP touché → <b style="color:var(--green)">+$'+gainUsd.toFixed(2)+'</b> (+'+(gainUsd/capital*100).toFixed(2)+'% du capital)':'')
+    +(liqPrice&&distLiq?'<br>Liquidation ≈ <b style="color:var(--red)">'+prixFmt(liqPrice)+'</b> (dist depuis entrée: <b>'+distLiq.toFixed(2)+'%</b>)':'');
 
   checkSlVsVol();
   renderPaliers();
 }
+
+
 
 // Helper format prix (utilisé dans calcLevier)
 function prixFmt(v){
