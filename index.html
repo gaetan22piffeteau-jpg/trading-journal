@@ -251,12 +251,14 @@ body::after{
   background:rgba(14,15,13,.9);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
   border-top:1px solid rgba(61,107,64,.18);
-  padding:7px 0 max(7px,env(safe-area-inset-bottom));
+  /* Remplit jusqu'au bord bas de l'écran — home indicator inclus */
+  padding:7px 0 0;
+  padding-bottom:max(env(safe-area-inset-bottom), 8px);
   flex-shrink:0;
   position:relative;
+  /* Colle au bas */
+  margin-bottom:0;
 }
 /* Liseré vert en haut du bottom nav */
 #bottomnav::before{
@@ -2363,3 +2365,4 @@ if('serviceWorker' in navigator){
 </script>
 </body>
 </html>
+
